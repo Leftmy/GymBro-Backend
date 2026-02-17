@@ -11,7 +11,7 @@ class UserWorkoutPlan(models.Model):
         db_table = 'user_workout_plans'
         verbose_name = 'User Workout Plan'
         verbose_name_plural = 'User Workout Plans'
-        unique_together = ('user_id', 'workout_plan')
+        unique_together = ('user', 'workout_plan')
 
     def __str__(self):
         return f"User {self.user_id} - {self.workout_plan.name}"

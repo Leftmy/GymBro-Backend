@@ -42,7 +42,7 @@ class Command(BaseCommand):
         users_data = [
             {"username": "john_doe", "email": "john@example.com", "password": "password123", "is_admin": False},
             {"username": "jane_doe", "email": "jane@example.com", "password": "jane12345", "is_admin": False},
-            {"username": "admin", "email": "admin@example.com", "password": "admin12345", "is_admin": True},
+            {"username": "admin", "email": "admin@example.com", "password": "admin12345", "is_admin": True, 'is_staff': True, 'is_active': True},
         ]
 
         self.users = {}
@@ -110,15 +110,24 @@ class Command(BaseCommand):
                 )
 
     def seed_workout_plans(self):
+        self.stdout.write("Seeding workout plans...")
+
+        admin = User.objects.get(username="admin")
+
         workout_plans_data = [
             ("Beginner Full Body", "A workout plan designed for beginners that targets all major muscle groups."),
-            ("Upper Body Strength", "A workout plan focused on building upper body strength, targeting the chest, back, shoulders, and arms."),
-            ("Lower Body Strength", "A workout plan focused on building lower body strength, targeting the legs and glutes."),
+            ("Upper Body Strength", "A workout plan focused on building upper body strength."),
+            ("Lower Body Strength", "A workout plan focused on building lower body strength."),
         ]
-        WorkoutPlan.objects.bulk_create([
-            WorkoutPlan(name=name, description=description)
-            for name, description in workout_plans_data
-        ], ignore_conflicts=True)
+
+        for name, description in workout_plans_data:
+            WorkoutPlan.objects.get_or_create(
+                name=name,
+                defaults={
+                    "description": description,
+                    "created_by": admin,
+                }
+            )
 
     def seed_workout_plan_exercises(self):
         self.stdout.write("Seeding workout plan exercises...")
