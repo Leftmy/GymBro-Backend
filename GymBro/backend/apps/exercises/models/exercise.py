@@ -4,6 +4,7 @@ from django.db import models
 class Exercise(models.Model):
     name = models.CharField(max_length=255, unique=True, null=False, blank=False)
     description = models.TextField(null=True, blank=True)
+    video_url = models.URLField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=False)
     updated_at = models.DateTimeField(auto_now=True, null=False)
 

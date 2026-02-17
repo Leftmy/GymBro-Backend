@@ -2,7 +2,7 @@ from django.db import models
 
 # Create your models here.
 class UserWorkoutPlan(models.Model):
-    user_id = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='user_workout_plans', db_index=True)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='user_workout_plans', db_index=True)
     workout_plan = models.ForeignKey('workouts.WorkoutPlan', on_delete=models.CASCADE, related_name='user_workout_plans', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, null=False)
     updated_at = models.DateTimeField(auto_now=True, null=False)
