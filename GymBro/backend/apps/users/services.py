@@ -3,13 +3,13 @@ from .validator import UserValidator
 
 class UserService:
     @staticmethod
-    def create_user(*, username, email, password, is_admin=False):
+    def create_user(*, username, email, password):
         UserValidator.validate_registration_data({
             "username": username,
             "email": email,
             "password": password,
         })
-        user = User.objects.create_user(username=username, email=email, password=password, is_admin=is_admin)
+        user = User.objects.create_user(username=username, email=email, password=password)
         return user
     
     @staticmethod

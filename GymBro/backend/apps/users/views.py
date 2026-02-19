@@ -24,13 +24,23 @@ class UserRegisterView(View):
         return render(request, 'users/register.html')
 
     def post(self, request):
-        # Registration logic here
         username = request.POST.get('username')
         email = request.POST.get('email')
         password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm-password')
+        print(request.POST)
+        if not username:
+            return render(request, 'users/register.html', {'error': 'Username is required'})
+
+        if password != confirm_password:
+            return render(request, 'users/register.html', {'error': 'Passwords do not match'})
+
         try:
-            user = UserService.create_user(username=username, email=email, password=password)
-            return render(request, 'users/register_success.html')
+            UserService.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            return render(request, 'home')
         except ValueError as e:
             return render(request, 'users/register.html', {'error': str(e)})
-        return render(request, 'users/register_success.html')

@@ -1,1 +1,16 @@
-<h2>Login page</h2>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="urf-8" />
+        <title>Login</title>
+    </head>
+    <body>
+        <h2>Register</h2>
+        <form method="post" action="">
+            {% csrf_token %}
+            <input type="text" name="email" placeholder="Email" />
+            <input type="password" name="password" placeholder="Password" />
+            <button type="submit">Submit</button>
+        </form>
+    </body>
+</html>
