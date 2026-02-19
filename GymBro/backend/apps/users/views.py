@@ -14,7 +14,7 @@ class UserLoginView(View):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return render(request, 'users/login_success.html')
+            return render(request, 'home')
         else:
             return render(request, 'users/login.html', {'error': 'Invalid credentials'})
         
