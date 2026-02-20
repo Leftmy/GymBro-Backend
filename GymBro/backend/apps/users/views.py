@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.contrib.auth import authenticate, login, logout
 from django.views import View
 from .services import UserService
@@ -12,9 +12,10 @@ class UserLoginView(View):
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
+        print(f"{username}, {password}")
         if user is not None:
             login(request, user)
-            return render(request, 'home')
+            return redirect('home-page')
         else:
             return render(request, 'users/login.html', {'error': 'Invalid credentials'})
         
@@ -28,7 +29,7 @@ class UserRegisterView(View):
         email = request.POST.get('email')
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm-password')
-        print(request.POST)
+        
         if not username:
             return render(request, 'users/register.html', {'error': 'Username is required'})
 
@@ -41,6 +42,6 @@ class UserRegisterView(View):
                 email=email,
                 password=password
             )
-            return render(request, 'home')
+            return redirect('home-page')
         except ValueError as e:
             return render(request, 'users/register.html', {'error': str(e)})

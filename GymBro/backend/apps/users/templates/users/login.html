@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta charset="urf-8" />
+        <meta charset="utf-8" />
         <title>Login</title>
     </head>
     <body>
         <h2>Login</h2>
-        <form method="post" action="">
+        <form method="post">
             {% csrf_token %}
-            <input type="text" name="email" placeholder="Email" />
+            <input type="text" name="username" placeholder="Username" />
             <input type="password" name="password" placeholder="Password" />
             <button type="submit">Submit</button>
         </form>
