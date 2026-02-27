@@ -30,9 +30,17 @@
             <div class="steps">
                 <h3>Choose from the list:</h3>
                 {% for workout in workouts %}
-                <div>
-                    {{ workout.name }}
-                </div>
+                    <div>
+                        <input type="radio"
+                            id="workout_{{ workout.id }}"
+                            name="workoutPlan"
+                            value="{{ workout.id }}"
+                            {% if forloop.first %}checked{% endif %}>
+                            
+                        <label for="workout_{{ workout.id }}">
+                            {{ workout.name }}
+                        </label>
+                    </div>
                 {% empty %}
                     <p>No workouts available</p>
                 {% endfor %}
