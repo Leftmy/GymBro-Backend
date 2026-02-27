@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{% static 'css/buildaplan.css' %}" />
+    <script src="{% static 'js/buildaplan.js' %}" defer></script>
+</head>
+<body>
+    <form class="build-form">
+    <h1>Build Your Workout Plan</h1>
+    <div class="progress-container">
+        <div class="progress"></div>
+        <ol>
+            <li class="current">Select</li>
+            <li>Choose</li>
+            <li>Review Plan</li>
+            <li>Bomb</li>
+        </ol>
+    </div>
+    <div class="steps-container">
+           <div class="steps">
+            <h3>Choose or Create a training plan?</h3>
+            <input type="radio" id="choose" name="planType" value="choose" checked>
+            <label for="choose">Choose Plan</label>
+            <input type="radio" id="create" name="planType" value="create">
+            <label for="create">Create Plan</label>
+        </div>
+            <div class="steps">
+                <h3>Choose from the list:</h3>
+                {% for workout in workouts %}
+                <div>
+                    {{ workout.name }}
+                </div>
+                {% empty %}
+                    <p>No workouts available</p>
+                {% endfor %}
+                </div>
+            <div class="steps">
+                <h3>Create your own workout:</h3>
+            </div>
+            <div class="steps">
+                <h3>Result:</h3>
+            </div>
+        
+    </div>
+    <div class="controls">
+        <button type="button" class="prev-btn">Prev</button>
+		<button type="button" class="next-btn">Next</button>
+		<button type="submit" class="submit-btn">Submit</button>
+    </div>
+</form>
+</body>
+</html>
