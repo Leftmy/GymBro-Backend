@@ -28,25 +28,41 @@
             <label for="create">Create Plan</label>
         </div>
             <div class="steps">
-                <h3>Choose from the list:</h3>
-                {% for workout in workouts %}
-                    <div>
-                        <input type="radio"
-                            id="workout_{{ workout.id }}"
-                            name="workoutPlan"
-                            value="{{ workout.id }}"
-                            {% if forloop.first %}checked{% endif %}>
-                            
-                        <label for="workout_{{ workout.id }}">
+                <div id="workouts-block">
+                    <h3>Choose from the list:</h3>
+                    {% for workout in workouts %}
+                        <label>
+                            <input type="radio"
+                                name="workoutPlan"
+                                value="{{ workout.id }}">
                             {{ workout.name }}
                         </label>
-                    </div>
-                {% empty %}
-                    <p>No workouts available</p>
-                {% endfor %}
+                    {% endfor %}
                 </div>
+                <div id="exercises-block" style="display:none;">
+                    <h3>Select exercises:</h3>
+                    <select id="muscle-select">
+                        <option value="Back">Back</option>
+                        <option value="Chest">Chest</option>
+                        <option value="Legs">Legs</option>
+                    </select>
+
+                    <div id="exercise-list">
+                        {% for exercise in exercises %}
+                            <label>
+                                <input type="checkbox"
+                                    name="exercises"
+                                    value="{{ exercise.id }}">
+                                {{ exercise.name }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
             <div class="steps">
-                <h3>Create your own workout:</h3>
+                <h3>Review:</h3>
+                <div id="plan-preview"></div>
             </div>
             <div class="steps">
                 <h3>Result:</h3>
