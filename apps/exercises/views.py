@@ -28,18 +28,14 @@ class ExercisesAPIView(APIView):
     )
     def get(self, request):
         primary_param = request.query_params.get('primary')
-        print(primary_param)
-        if primary_param is not None:
-            only_primary = primary_param.lower() == 'true'  # True / False
-        else:
-            only_primary = None  # не фільтруємо
+        only_primary = True if primary_param == 'true' else False
         exercises = get_exercises(
             muscle_slug=request.query_params.get('muscle'),
             only_primary=only_primary
         )
 
         serializer = ExerciseSerializer(exercises, many=True)
-        return Response(serializer.data)       
+        return Response(serializer.data)
 
 class ExerciseDetailAPIView(APIView):
     pass
