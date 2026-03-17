@@ -8,7 +8,8 @@ from apps.workouts.services import (
     get_all_workout_plans, 
     get_workout_plan_by_id, 
     create_workout_plan, 
-    update_workout_plan
+    update_workout_plan,
+    delete_workout
 )
 
 logger = logging.getLogger(__name__)
@@ -61,3 +62,11 @@ class PlansDetailsAPIView(APIView):
         updated_workout = update_workout_plan(workout, **serializer.validated_data)
         
         return Response(WorkoutPlanSerializer(updated_workout).data, status=status.HTTP_200_OK)
+    
+    def delete(self, request, pk):
+        deleted = delete_workout(pk)
+
+        if not deleted:
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

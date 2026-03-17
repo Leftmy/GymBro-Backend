@@ -21,3 +21,12 @@ def update_workout_plan(workout_plan: WorkoutPlan, **data) -> WorkoutPlan:
         setattr(workout_plan, field, value)
     workout_plan.save()
     return workout_plan
+
+def delete_workout(workout_plan_id: int):
+    workout = WorkoutPlan.objects.filter(id=workout_plan_id).first()
+    
+    if not workout:
+        return False
+    
+    workout.delete()
+    return True

@@ -64,50 +64,79 @@ class Command(BaseCommand):
 
         # --- 3. Вправи ---
         self.stdout.write('Creating exercises...')
+
         exercises_info = [
             {
                 'name': 'Bench Press',
                 'difficulty': Exercise.Difficulty.INTERMEDIATE,
-                'muscles': ['Chest', 'Triceps', 'Shoulders']
+                'primary': ['Chest'],
+                'secondary': ['Triceps', 'Shoulders'],
             },
             {
                 'name': 'Deadlift',
                 'difficulty': Exercise.Difficulty.ADVANCED,
-                'muscles': ['Back', 'Quads']
+                'primary': ['Back'],
+                'secondary': ['Quads'],
             },
             {
                 'name': 'Push-ups',
                 'difficulty': Exercise.Difficulty.BEGINNER,
-                'muscles': ['Chest', 'Triceps']
+                'primary': ['Chest'],
+                'secondary': ['Triceps'],
             },
             {
                 'name': 'Bicep Curls',
                 'difficulty': Exercise.Difficulty.BEGINNER,
-                'muscles': ['Biceps']
+                'primary': ['Biceps'],
+                'secondary': [],
             },
             {
                 'name': 'Plank',
                 'difficulty': Exercise.Difficulty.BEGINNER,
-                'muscles': ['Abs']
-            }
+                'primary': ['Abs'],
+                'secondary': [],
+            },
         ]
 
         exercise_objs = []
-        for ex_data in exercises_info:
-            exercise, created = Exercise.objects.get_or_create(
-                name=ex_data['name'],
-                defaults={'difficulty_level': ex_data['difficulty']}
-            )
-            exercise_objs.append(exercise)
-            
-            # Додаємо зв'язки з м'язами через проміжну таблицю
-            if created:
-                for m_name in ex_data['muscles']:
-                    ExerciseMuscleGroup.objects.create(
-                        exercise=exercise,
-                        muscle_group=muscle_objs[m_name]
-                    )
 
+        for ex_data in exercises_info:
+            exercise, _ = Exercise.objects.get_or_create(
+                name=ex_data['name'],
+                defaults={
+                    'difficulty_level': ex_data['difficulty']
+                }
+            )
+
+            exercise_objs.append(exercise)
+
+            # 🔥 ВАЖЛИВО: очищаємо старі зв’язки
+            ExerciseMuscleGroup.objects.filter(exercise=exercise).delete()
+
+            bulk_data = []
+
+            # --- PRIMARY ---
+            for m_name in ex_data['primary']:
+                bulk_data.append(
+                    ExerciseMuscleGroup(
+                        exercise=exercise,
+                        muscle_group=muscle_objs[m_name],
+                        is_primary=True
+                    )
+                )
+
+            # --- SECONDARY ---
+            for m_name in ex_data['secondary']:
+                bulk_data.append(
+                    ExerciseMuscleGroup(
+                        exercise=exercise,
+                        muscle_group=muscle_objs[m_name],
+                        is_primary=False
+                    )
+                )
+
+            # 🔥 швидше ніж create() в циклі
+            ExerciseMuscleGroup.objects.bulk_create(bulk_data)
         # --- 4. Плани тренувань ---
         self.stdout.write('Creating workout plans...')
         plan_names = ['Full Body Beginner', 'Push Day (Advanced)']

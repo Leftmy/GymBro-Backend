@@ -15,7 +15,7 @@ class ExerciseMuscleGroup(models.Model):
     )
     
     is_primary = models.BooleanField(
-        default=True, 
+        default=False, 
         help_text="Чи є цей м'яз основним для даної вправи?"
     )
 
