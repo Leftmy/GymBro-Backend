@@ -1,35 +1,29 @@
 from django.db import models
 from django.conf import settings
+from common.core.models import BaseModel
 
-class WorkoutPlan(models.Model):
-    name = models.CharField(max_length=100) 
-    description = models.TextField(null=True, blank=True)
-    
+User = settings.AUTH_USER_MODEL
+
+class WorkoutPlan(BaseModel):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
     created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        related_name='created_workout_plans',
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_plans",
         db_index=True
     )
-
-    exercises = models.ManyToManyField('exercises.Exercise', through='WorkoutPlanExercise', related_name='workout_plans')
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    is_public = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'workout_plans'
-        verbose_name = 'Workout Plan'
-        verbose_name_plural = 'Workout Plans'
-        
+        db_table = "workout_plans"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'created_by'], 
-                name='unique_plan_name_per_user'
+            fields=["name", "created_by"],
+            name="unique_plan_per_user"
             )
         ]
 
     def __str__(self):
-        owner = self.created_by.username if self.created_by else "Deleted User"
-        return f"{self.name} (by {owner})"
+        return self.name

@@ -1,35 +1,28 @@
 from django.db import models
 from django.conf import settings
+from common.core.models import BaseModel
+from .workout_plan import WorkoutPlan
 
-class UserWorkoutPlan(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        related_name='plan_assignments',
-        db_index=True
-    )
-    workout_plan = models.ForeignKey(
-        'workouts.WorkoutPlan', 
-        on_delete=models.CASCADE, 
-        related_name='assigned_users',
-        db_index=True
-    )
-    
+User = settings.AUTH_USER_MODEL
+class UserWorkoutPlan(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_plans")
+    workout_plan = models.ForeignKey(WorkoutPlan, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    started_at = models.DateField(null=True, blank=True)
 
     class Meta:
-        db_table = 'user_workout_plans'
-        verbose_name = 'User Workout Plan'
-        verbose_name_plural = 'User Workout Plans'
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'workout_plan'], 
-                name='unique_user_plan_assignment'
-            )
+                fields=["user"],
+                condition=models.Q(is_active=True),
+                name="unique_active_plan_per_user"
+            ),
+            models.UniqueConstraint(fields=["user", "workout_plan"], name="unique_user_plan")
+        ]
+        indexes = [
+            models.Index(fields=["user", "is_active"]),
         ]
 
     def __str__(self):
-        return f"{self.user.username} - {self.workout_plan.name}"
+        status = "Active" if self.is_active else "Inactive"
+        return f"{self.user.username} - {self.workout_plan.name} [{status}]"
