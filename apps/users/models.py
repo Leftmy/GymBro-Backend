@@ -9,6 +9,11 @@ class UserRole(models.TextChoices):
     ADMIN = "admin", "Admin"
 
 class User(AbstractUser, BaseModel):
+    email = models.EmailField(unique=True)
+    
+    USERNAME_FIELD = 'email' 
+    REQUIRED_FIELDS = ['username']
+    
     role = models.CharField(
         max_length=10,
         choices=UserRole.choices,

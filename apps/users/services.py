@@ -1,6 +1,17 @@
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import AuthenticationFailed
 from .models import User, UserRole
 
 class UserService:
+    @staticmethod
+    def get_user_by_name(username: str) -> User:
+        """Returns a single user or raises 404 error."""
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            return None
+
     @staticmethod
     def get_user_by_id(user_id: int) -> User:
         """Returns a single user or raises 404 error."""
@@ -52,3 +63,21 @@ class UserService:
             user.delete()
             return True
         return False
+
+
+    @staticmethod
+    def authenticate_user(email, password):
+        user = authenticate(email=email, password=password)
+        
+        if not user:
+            raise AuthenticationFailed("Невірний email або пароль")
+        
+        if not user.is_active:
+            raise AuthenticationFailed("Користувач деактивований")
+
+        refresh = RefreshToken.for_user(user)
+        return {
+            "user": user,
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        }
