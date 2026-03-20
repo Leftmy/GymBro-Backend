@@ -1,5 +1,5 @@
 
-from .services import MuscleService
+from .services import MuscleService, ExerciseService
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.shortcuts import render
@@ -8,6 +8,8 @@ from rest_framework.views import APIView, Response
 from .serializers import (
     MuscleGroupSerializer,
     MuscleCreateSerializer,
+    ExerciseCreateSerializer,
+    ExerciseSerializer
 )
 
 class MusclesView(APIView):
@@ -79,6 +81,80 @@ class MusclesView(APIView):
             return Response({"detail": "ID is required"}, status=400)
         
         success = MuscleService.delete_muscle(int(m_id))
+        if success:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+            
+        return Response({"detail": "Muscle not found"}, status=404)
+    
+
+class ExerciseView(APIView):
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='id', type=int, description='Filter by ID'),
+            OpenApiParameter(name='name', type=str, description='Filter by name'),
+        ],
+        responses={200: ExerciseSerializer(many=True)}
+    )
+    def get(self, request):
+        exercise_id = request.query_params.get('id')
+        exercise_name = request.query_params.get('name')
+
+        if exercise_id:
+            muscle = ExerciseService.get_exercise_by_id(exercise_id)
+            if not muscle: return Response(status=404)
+            return Response(ExerciseSerializer(muscle).data)
+        
+        if exercise_name:
+            muscle = ExerciseService.get_exercise_by_name(exercise_name)
+            if not muscle: return Response(status=404)
+            return Response(ExerciseSerializer(muscle).data)
+
+        muscles = ExerciseService.get_all_exercises()
+        return Response(ExerciseSerializer(muscles, many=True).data)
+    
+    @extend_schema(request=ExerciseCreateSerializer, responses={201: ExerciseSerializer})
+    def post(self, request):
+        serializer = ExerciseCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        muscle = ExerciseService.create_exercise(**serializer.validated_data)
+        if not muscle:
+            return Response({"detail": "Вправа з такою назвою вже існує"}, status=400)
+            
+        return Response(ExerciseSerializer(muscle).data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        parameters=[OpenApiParameter(name='id', type=int)],
+        request=ExerciseCreateSerializer, 
+        responses={202: ExerciseSerializer}
+    )
+    def patch(self, request):
+        m_id = request.query_params.get('id')
+        if not m_id:
+            return Response({"detail": "ID is required"}, status=400)
+
+        serializer = ExerciseCreateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        
+        exercise = ExerciseService.update_exercise(int(m_id), **serializer.validated_data)
+        
+        if not exercise:
+            return Response({"detail": "М'яз не знайдено"}, status=404)
+            
+        return Response(ExerciseSerializer(exercise).data, status=status.HTTP_202_ACCEPTED)
+    
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='id', type=int, description='Filter by ID'),
+        ],
+        responses={204}
+    )
+    def delete(self, request):
+        m_id = request.query_params.get('id')
+        if not m_id:
+            return Response({"detail": "ID is required"}, status=400)
+        
+        success = ExerciseService.delete_exercise(int(m_id))
         if success:
             return Response(status=status.HTTP_204_NO_CONTENT)
             

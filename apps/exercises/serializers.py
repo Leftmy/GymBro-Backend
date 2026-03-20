@@ -14,7 +14,7 @@ class MuscleCreateSerializer(serializers.Serializer):
     svg_id = serializers.CharField()
 
 class ExerciseSerializer(serializers.ModelSerializer):
-    difficulty = serializers.CharField(source='get_difficulty_level_display')
+    difficulty = serializers.CharField(source='get_difficulty_display')
     muscles = MuscleGroupSerializer(many=True)
 
     class Meta:
@@ -26,3 +26,15 @@ class ExerciseSerializer(serializers.ModelSerializer):
             'difficulty',
             'muscles',
         ]
+
+class ExerciseMuscleMapSerializer(serializers.Serializer):
+    slug = serializers.SlugField()
+    is_primary = serializers.BooleanField(default=False)
+
+class ExerciseCreateSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    description = serializers.CharField(required=False, allow_blank=True)
+    difficulty = serializers.IntegerField(default=1)
+    equipment = serializers.CharField(required=False, allow_blank=True)
+    video_url = serializers.URLField(required=False, allow_blank=True)
+    muscles_map = ExerciseMuscleMapSerializer(many=True)

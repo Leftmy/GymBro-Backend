@@ -1,7 +1,7 @@
 from django.urls import path
-from apps.exercises.views import MusclesView
+from apps.exercises.views import MusclesView, ExerciseView
 
 urlpatterns = [
     path("muscles/", MusclesView.as_view(), name="muscles"),
-    # path('exercises/<int:pk>/', ExerciseDetailAPIView.as_view()),
+    path('exercises/', ExerciseView.as_view()),
 ]
