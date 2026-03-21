@@ -10,7 +10,8 @@ class WorkoutPlanExercise(BaseModel):
     )
     exercise = models.ForeignKey(
         "exercises.Exercise",
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name="plan_links"
     )
     sets = models.PositiveIntegerField()
     reps = models.PositiveIntegerField()

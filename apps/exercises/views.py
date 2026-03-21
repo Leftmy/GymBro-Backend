@@ -92,36 +92,46 @@ class ExerciseView(APIView):
         parameters=[
             OpenApiParameter(name='id', type=int, description='Filter by ID'),
             OpenApiParameter(name='name', type=str, description='Filter by name'),
+            OpenApiParameter(name='muscle', type=str, description='Filter by muscle slug'),
+            OpenApiParameter(name='primary', type=bool, description='Additional filter for muscles'),
+            OpenApiParameter(name='difficulty', type=int, description='Filter by difficulty level'),
+            OpenApiParameter(name='equipment', type=str, description='Filter by equipment slug'),
         ],
         responses={200: ExerciseSerializer(many=True)}
     )
     def get(self, request):
         exercise_id = request.query_params.get('id')
-        exercise_name = request.query_params.get('name')
 
         if exercise_id:
             muscle = ExerciseService.get_exercise_by_id(exercise_id)
             if not muscle: return Response(status=404)
             return Response(ExerciseSerializer(muscle).data)
         
+        exercise_name = request.query_params.get('name')
         if exercise_name:
             muscle = ExerciseService.get_exercise_by_name(exercise_name)
             if not muscle: return Response(status=404)
             return Response(ExerciseSerializer(muscle).data)
-
-        muscles = ExerciseService.get_all_exercises()
-        return Response(ExerciseSerializer(muscles, many=True).data)
+        
+        only_primary = request.query_params.get('primary', 'false').lower() == 'true'
+        exercises = ExerciseService.get_all_exercises(
+            muscle_slug=request.query_params.get('muscle'),
+            only_primary=only_primary,
+            difficulty=request.query_params.get('difficulty'),
+            equipment=request.query_params.get('equipment')
+        )
+        return Response(ExerciseSerializer(exercises, many=True).data)
     
     @extend_schema(request=ExerciseCreateSerializer, responses={201: ExerciseSerializer})
     def post(self, request):
         serializer = ExerciseCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        muscle = ExerciseService.create_exercise(**serializer.validated_data)
-        if not muscle:
+        exercise = ExerciseService.create_exercise(**serializer.validated_data)
+        if not exercise:
             return Response({"detail": "Вправа з такою назвою вже існує"}, status=400)
             
-        return Response(ExerciseSerializer(muscle).data, status=status.HTTP_201_CREATED)
+        return Response(ExerciseSerializer(exercise).data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         parameters=[OpenApiParameter(name='id', type=int)],

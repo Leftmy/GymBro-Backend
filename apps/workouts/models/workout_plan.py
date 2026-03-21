@@ -15,6 +15,11 @@ class WorkoutPlan(BaseModel):
         db_index=True
     )
     is_public = models.BooleanField(default=False)
+    exercises = models.ManyToManyField(
+        "exercises.Exercise",
+        through="WorkoutPlanExercise",
+        related_name="workout_plans"
+    )
 
     class Meta:
         db_table = "workout_plans"

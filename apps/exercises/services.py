@@ -54,8 +54,23 @@ class MuscleService:
     
 class ExerciseService:
     @staticmethod
-    def get_all_exercises():
-        return Exercise.objects.all()
+    def get_all_exercises(*, muscle_slug: str = None, only_primary: bool = False, difficulty: int = None, equipment: str = None ):
+
+        qs = Exercise.objects.all()
+
+        if muscle_slug:
+            qs = qs.filter(muscle_links__muscle__slug=muscle_slug, muscle_links__is_primary=only_primary)
+        
+            # if only_primary:
+            #     qs = qs.filter(muscle_links__is_primary=True)
+
+        if difficulty:
+            qs = qs.filter(difficulty=difficulty)
+
+        if equipment:
+            qs = qs.filter(equipment=equipment)
+
+        return qs.distinct()
     
     @staticmethod
     def get_exercise_by_id(exercise_id: int):
