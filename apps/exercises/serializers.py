@@ -31,6 +31,7 @@ class ExerciseMuscleMapSerializer(serializers.Serializer):
     slug = serializers.SlugField()
     is_primary = serializers.BooleanField(default=False)
 
+
 class ExerciseCreateSerializer(serializers.Serializer):
     name = serializers.CharField()
     description = serializers.CharField(required=False, allow_blank=True)
@@ -38,3 +39,11 @@ class ExerciseCreateSerializer(serializers.Serializer):
     equipment = serializers.CharField(required=False, allow_blank=True)
     video_url = serializers.URLField(required=False, allow_blank=True)
     muscles_map = ExerciseMuscleMapSerializer(many=True)
+
+    def validate_muscles_map(self, value):
+        slugs = [item["slug"] for item in value]
+
+        if len(slugs) != len(set(slugs)):
+            raise serializers.ValidationError("Duplicate muscles")
+
+        return value

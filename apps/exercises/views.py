@@ -5,6 +5,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.views import APIView, Response
+from rest_framework.viewsets import ViewSet
 from .serializers import (
     MuscleGroupSerializer,
     MuscleCreateSerializer,
@@ -103,15 +104,15 @@ class ExerciseView(APIView):
         exercise_id = request.query_params.get('id')
 
         if exercise_id:
-            muscle = ExerciseService.get_exercise_by_id(exercise_id)
-            if not muscle: return Response(status=404)
-            return Response(ExerciseSerializer(muscle).data)
+            exercise = ExerciseService.get_exercise_by_id(exercise_id)
+            if not exercise: return Response(status=404)
+            return Response(ExerciseSerializer(exercise).data)
         
         exercise_name = request.query_params.get('name')
         if exercise_name:
-            muscle = ExerciseService.get_exercise_by_name(exercise_name)
-            if not muscle: return Response(status=404)
-            return Response(ExerciseSerializer(muscle).data)
+            exercise = ExerciseService.get_exercise_by_name(exercise_name)
+            if not exercise: return Response(status=404)
+            return Response(ExerciseSerializer(exercise).data)
         
         only_primary = request.query_params.get('primary', 'false').lower() == 'true'
         exercises = ExerciseService.get_all_exercises(
@@ -136,7 +137,7 @@ class ExerciseView(APIView):
     @extend_schema(
         parameters=[OpenApiParameter(name='id', type=int)],
         request=ExerciseCreateSerializer, 
-        responses={202: ExerciseSerializer}
+        responses={200: ExerciseSerializer}
     )
     def patch(self, request):
         m_id = request.query_params.get('id')
@@ -151,7 +152,7 @@ class ExerciseView(APIView):
         if not exercise:
             return Response({"detail": "М'яз не знайдено"}, status=404)
             
-        return Response(ExerciseSerializer(exercise).data, status=status.HTTP_202_ACCEPTED)
+        return Response(ExerciseSerializer(exercise).data, status=status.HTTP_200_ACCEPTED)
     
     @extend_schema(
         parameters=[

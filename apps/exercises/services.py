@@ -4,16 +4,6 @@ from apps.exercises.models.exercise import Exercise
 from apps.exercises.models.muscle_group import MuscleGroup
 from apps.exercises.models.exercise_muscle_group import ExerciseMuscle
 
-# def get_exercises(muscle_slug=None, only_primary=None):
-#     return ExerciseMuscleGroup.objects.filter(muscle_group__slug=muscle_slug,is_primary=only_primary).values('exercise_id', 'muscle_group__slug', 'is_primary')
-def get_exercises(muscle_slug=None, only_primary=None):
-    qs = Exercise.objects.filter(
-        exercise_muscles__muscle_group__slug=muscle_slug,
-        exercise_muscles__is_primary=only_primary
-    ).distinct()
-
-    return qs
-
 class MuscleService:
     @staticmethod
     def get_all_muscles():
@@ -54,16 +44,22 @@ class MuscleService:
     
 class ExerciseService:
     @staticmethod
-    def get_all_exercises(*, muscle_slug: str = None, only_primary: bool = False, difficulty: int = None, equipment: str = None ):
+    def get_all_exercises(*, muscle_slug: str = None, only_primary: bool = None, difficulty: int = None, equipment: str = None ):
 
-        qs = Exercise.objects.all()
+        qs = Exercise.objects.prefetch_related("muscles").all()
 
         if muscle_slug:
-            qs = qs.filter(muscle_links__muscle__slug=muscle_slug, muscle_links__is_primary=only_primary)
-        
-            # if only_primary:
-            #     qs = qs.filter(muscle_links__is_primary=True)
+            if only_primary is None:
+                qs = qs.filter(muscle_links__muscle__slug=muscle_slug)
+            else:
+                qs = qs.filter(
+                    muscle_links__muscle__slug=muscle_slug,
+                    muscle_links__is_primary=only_primary
+                )
 
+        if only_primary is not None:
+            qs = qs.filter(muscle_links__is_primary=only_primary)
+        
         if difficulty:
             qs = qs.filter(difficulty=difficulty)
 
@@ -74,49 +70,49 @@ class ExerciseService:
     
     @staticmethod
     def get_exercise_by_id(exercise_id: int):
-        return Exercise.objects.filter(id=exercise_id).first()
+        return Exercise.objects.prefetch_related("muscles").filter(id=exercise_id).first()
         
     @staticmethod
     def get_exercise_by_name(exercise_name: str):
-        return Exercise.objects.filter(name=exercise_name).first()
+        return Exercise.objects.prefetch_related("muscles").filter(name=exercise_name).first()
     
     @staticmethod
-    def create_exercise(
-        *, 
-        name: str, 
-        slug: str = None, 
-        description: str = "", 
-        video_url: str = "", 
-        difficulty: int = 1, 
-        equipment: str = "", 
-        muscles_map: list[dict]
-    ):
-        if ExerciseService.get_exercise_by_name(name):
-            return None
+    def create_exercise(*, name, description="", difficulty=1, equipment="", video_url="", muscles_map):
+        from django.db import IntegrityError
+
+        slugs = [m["slug"] for m in muscles_map]
+
+        muscle_map = {
+            m.slug: m for m in MuscleGroup.objects.filter(slug__in=slugs)
+        }
 
         with transaction.atomic():
-            exercise = Exercise.objects.create(
-                name=name,
-                slug=slug, 
-                description=description,
-                video_url=video_url,
-                difficulty=difficulty,
-                equipment=equipment
-            )
+            try:
+                exercise = Exercise.objects.create(
+                    name=name,
+                    description=description,
+                    difficulty=difficulty,
+                    equipment=equipment,
+                    video_url=video_url,
+                )
+            except IntegrityError:
+                return None
+
+            links = []
 
             for item in muscles_map:
-                muscle_slug = item.get('slug')
-                is_primary = item.get('is_primary', False)
-
-                muscle = MuscleGroup.objects.filter(slug=muscle_slug).first()
-                
+                muscle = muscle_map.get(item["slug"])
                 if muscle:
-                    ExerciseMuscle.objects.create(
-                        exercise=exercise,
-                        muscle=muscle,
-                        is_primary=is_primary
+                    links.append(
+                        ExerciseMuscle(
+                            exercise=exercise,
+                            muscle=muscle,
+                            is_primary=item.get("is_primary", False),
+                        )
                     )
-            
+
+            ExerciseMuscle.objects.bulk_create(links)
+
             return exercise
 
     @staticmethod
@@ -126,28 +122,43 @@ class ExerciseService:
         if not exercise:
             return None
 
-        muscles_map = data.pop('muscles_map', None)
+        muscles_map = data.pop("muscles_map", None)
+
+        allowed_fields = {"name", "description", "video_url", "difficulty", "equipment"}
 
         with transaction.atomic():
             for attr, value in data.items():
-                setattr(exercise, attr, value)
+                if attr in allowed_fields:
+                    setattr(exercise, attr, value)
+
             exercise.save()
 
             if muscles_map is not None:
                 exercise.muscle_links.all().delete()
 
-                for item in muscles_map:
-                    muscle_slug = item.get('slug')
-                    is_primary = item.get('is_primary', False)
+                slugs = [item["slug"] for item in muscles_map]
 
-                    muscle = MuscleGroup.objects.filter(slug=muscle_slug).first()
-                    if muscle:
-                        ExerciseMuscle.objects.create(
+                muscle_map = {
+                    m.slug: m for m in MuscleGroup.objects.filter(slug__in=slugs)
+                }
+
+                links = []
+
+                for item in muscles_map:
+                    muscle = muscle_map.get(item["slug"])
+                    if not muscle:
+                        continue
+
+                    links.append(
+                        ExerciseMuscle(
                             exercise=exercise,
                             muscle=muscle,
-                            is_primary=is_primary
+                            is_primary=item.get("is_primary", False),
                         )
-            
+                    )
+
+                ExerciseMuscle.objects.bulk_create(links)
+
             return exercise
         
 
@@ -160,3 +171,6 @@ class ExerciseService:
         
         exercise.delete()
         return True
+
+
+    
