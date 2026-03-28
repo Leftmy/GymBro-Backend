@@ -2,6 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
+
 from apps.workouts.models.workout_plan import WorkoutPlan
 from apps.workouts.services import WorkoutService
 from apps.workouts.serializers import (
@@ -15,29 +17,36 @@ class WorkoutViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     # ------------------------
-    # 🔹 GET /workouts/
+    # 🔹 LIST
     # ------------------------
+    @extend_schema(
+        summary="Get user workouts",
+        responses=WorkoutPlanSerializer(many=True),
+    )
     def list(self, request):
         workouts = WorkoutService.get_all_user_workouts(request.user)
-
-        # 🔥 оптимізація
         workouts = workouts.prefetch_related(
             "plan_exercises__exercise__muscles"
         )
 
-        serializer = WorkoutPlanSerializer(workouts, many=True)
-        return Response(serializer.data)
+        return Response(WorkoutPlanSerializer(workouts, many=True).data)
 
     # ------------------------
-    # 🔹 GET /workouts/{id}/
+    # 🔹 RETRIEVE
     # ------------------------
+    @extend_schema(
+        summary="Get workout by ID",
+        responses={
+            200: WorkoutPlanSerializer,
+            404: OpenApiResponse(description="Not found"),
+        },
+    )
     def retrieve(self, request, pk=None):
         workout = WorkoutService.get_workout_by_id(pk)
 
         if not workout:
             return Response({"detail": "Not found"}, status=404)
 
-        # 🔐 базова безпека
         if workout.created_by != request.user and not workout.is_public:
             return Response({"detail": "Forbidden"}, status=403)
 
@@ -48,12 +57,45 @@ class WorkoutViewSet(viewsets.ViewSet):
             .first()
         )
 
-        serializer = WorkoutPlanSerializer(workout)
-        return Response(serializer.data)
+        return Response(WorkoutPlanSerializer(workout).data)
 
     # ------------------------
-    # 🔹 POST /workouts/
+    # 🔹 CREATE
     # ------------------------
+    @extend_schema(
+        summary="Create workout",
+        request=WorkoutCreateSerializer,
+        responses={
+            201: WorkoutPlanSerializer,
+            400: OpenApiResponse(description="Validation error"),
+        },
+        examples=[
+            OpenApiExample(
+                "Create workout example",
+                value={
+                    "name": "Leg Day",
+                    "description": "Hard workout",
+                    "is_public": False,
+                    "exercises": [
+                        {
+                            "slug": "squat",
+                            "sets": 4,
+                            "reps": 10,
+                            "rest_seconds": 90,
+                            "order": 1
+                        },
+                        {
+                            "slug": "lunges",
+                            "sets": 3,
+                            "reps": 12,
+                            "order": 2
+                        }
+                    ]
+                },
+                request_only=True,
+            )
+        ],
+    )
     def create(self, request):
         serializer = WorkoutCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -78,8 +120,13 @@ class WorkoutViewSet(viewsets.ViewSet):
         )
 
     # ------------------------
-    # 🔹 PATCH /workouts/{id}/
+    # 🔹 PATCH
     # ------------------------
+    @extend_schema(
+        summary="Update workout",
+        request=WorkoutUpdateSerializer,
+        responses=WorkoutPlanSerializer,
+    )
     def partial_update(self, request, pk=None):
         serializer = WorkoutUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -99,8 +146,15 @@ class WorkoutViewSet(viewsets.ViewSet):
         return Response(WorkoutPlanSerializer(updated).data)
 
     # ------------------------
-    # 🔹 DELETE /workouts/{id}/
+    # 🔹 DELETE
     # ------------------------
+    @extend_schema(
+        summary="Delete workout",
+        responses={
+            204: OpenApiResponse(description="Deleted"),
+            404: OpenApiResponse(description="Not found"),
+        },
+    )
     def destroy(self, request, pk=None):
         workout = WorkoutService.get_workout_by_id(pk)
 
