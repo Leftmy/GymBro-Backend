@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 
@@ -11,57 +12,19 @@ from apps.workouts.serializers import (
     WorkoutCreateSerializer,
     WorkoutUpdateSerializer,
 )
-
-
-class WorkoutViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
-
-    # ------------------------
-    # 🔹 LIST
-    # ------------------------
+class WorkoutsView(APIView):
     @extend_schema(
         summary="Get user workouts",
         responses=WorkoutPlanSerializer(many=True),
     )
-    def list(self, request):
+    def get(self, request):
         workouts = WorkoutService.get_all_user_workouts(request.user)
         workouts = workouts.prefetch_related(
             "plan_exercises__exercise__muscles"
         )
 
         return Response(WorkoutPlanSerializer(workouts, many=True).data)
-
-    # ------------------------
-    # 🔹 RETRIEVE
-    # ------------------------
-    @extend_schema(
-        summary="Get workout by ID",
-        responses={
-            200: WorkoutPlanSerializer,
-            404: OpenApiResponse(description="Not found"),
-        },
-    )
-    def retrieve(self, request, pk=None):
-        workout = WorkoutService.get_workout_by_id(pk)
-
-        if not workout:
-            return Response({"detail": "Not found"}, status=404)
-
-        if workout.created_by != request.user and not workout.is_public:
-            return Response({"detail": "Forbidden"}, status=403)
-
-        workout = (
-            WorkoutPlan.objects
-            .filter(pk=pk)
-            .prefetch_related("plan_exercises__exercise__muscles")
-            .first()
-        )
-
-        return Response(WorkoutPlanSerializer(workout).data)
-
-    # ------------------------
-    # 🔹 CREATE
-    # ------------------------
+    
     @extend_schema(
         summary="Create workout",
         request=WorkoutCreateSerializer,
@@ -96,7 +59,7 @@ class WorkoutViewSet(viewsets.ViewSet):
             )
         ],
     )
-    def create(self, request):
+    def post(self, request):
         serializer = WorkoutCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -118,16 +81,39 @@ class WorkoutViewSet(viewsets.ViewSet):
             WorkoutPlanSerializer(workout).data,
             status=status.HTTP_201_CREATED,
         )
+    
+class WorkoutsDetailView(APIView):
+    @extend_schema(
+        summary="Get workout by ID",
+        responses={
+            200: WorkoutPlanSerializer,
+            404: OpenApiResponse(description="Not found"),
+        },
+    )
+    def get(self, request, pk=None):
+        workout = WorkoutService.get_workout_by_id(pk)
 
-    # ------------------------
-    # 🔹 PATCH
-    # ------------------------
+        if not workout:
+            return Response({"detail": "Not found"}, status=404)
+
+        if workout.created_by != request.user and not workout.is_public:
+            return Response({"detail": "Forbidden"}, status=403)
+
+        workout = (
+            WorkoutPlan.objects
+            .filter(pk=pk)
+            .prefetch_related("plan_exercises__exercise__muscles")
+            .first()
+        )
+
+        return Response(WorkoutPlanSerializer(workout).data)
+
     @extend_schema(
         summary="Update workout",
         request=WorkoutUpdateSerializer,
         responses=WorkoutPlanSerializer,
     )
-    def partial_update(self, request, pk=None):
+    def patch(self, request, pk=None):
         serializer = WorkoutUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -155,7 +141,7 @@ class WorkoutViewSet(viewsets.ViewSet):
             404: OpenApiResponse(description="Not found"),
         },
     )
-    def destroy(self, request, pk=None):
+    def delete(self, request, pk=None):
         workout = WorkoutService.get_workout_by_id(pk)
 
         if not workout:
