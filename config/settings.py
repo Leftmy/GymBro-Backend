@@ -46,6 +46,7 @@ INSTALLED_APPS += [
     'apps.users',
     'apps.exercises',
     'apps.workouts',
+    'apps.blog',
     'common'
 ]
 
