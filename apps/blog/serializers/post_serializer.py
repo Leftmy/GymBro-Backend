@@ -1,17 +1,11 @@
 # blog/serializers/post_serializer.py
 
 from rest_framework import serializers
-from apps.blog.models import Post, Comment
-
-
-class CommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ["id", "user", "body", "created_at"]
-
+from apps.blog.models import Post
+from apps.blog.serializers.comment_serializer import CommentSerializer
 
 class PostSerializer(serializers.ModelSerializer):
-    comments = CommentSerializer(many=True, read_only=True)
+    comments_count = serializers.IntegerField(source="comments.count", read_only=True)
     author = serializers.StringRelatedField()
 
     class Meta:
@@ -26,7 +20,7 @@ class PostSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "published_at",
-            "comments",
+            "comments_count",
         ]
 
 class PostCreateUpdateSerializer(serializers.ModelSerializer):
