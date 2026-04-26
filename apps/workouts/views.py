@@ -1,29 +1,49 @@
-from rest_framework import viewsets, status
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
+from drf_spectacular.utils import OpenApiParameter, extend_schema, OpenApiResponse, OpenApiExample
 
+from apps.workouts.models.user_workout_plan import UserWorkoutPlan
 from apps.workouts.models.workout_plan import WorkoutPlan
 from apps.workouts.services import WorkoutService
 from apps.workouts.serializers import (
+    UserWorkoutPlanReadSerializer,
+    UserWorkoutPlanWriteSerializer,
     WorkoutPlanSerializer,
     WorkoutCreateSerializer,
     WorkoutUpdateSerializer,
 )
 class WorkoutsView(APIView):
     @extend_schema(
-        summary="Get user workouts",
-        responses=WorkoutPlanSerializer(many=True),
+        parameters=[
+            OpenApiParameter(
+                name='day',
+                type=str,
+                enum=['all', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'], 
+            ),
+        ],
+        summary="Get user workouts (optionally filtered by day)",
+        responses=UserWorkoutPlanReadSerializer(many=True),
     )
     def get(self, request):
-        workouts = WorkoutService.get_all_user_workouts(request.user)
-        workouts = workouts.prefetch_related(
-            "plan_exercises__exercise__muscles"
+        day = request.query_params.get("day")
+
+        user_workouts = WorkoutService.get_all_user_workouts(request.user)
+        workouts = WorkoutService.filter_user_workouts_by_day(user_workouts, day)
+
+        workouts = (
+            workouts
+            .select_related("workout_plan")
+            .prefetch_related(
+                "workout_plan__plan_exercises__exercise__muscles"
+            )
         )
 
-        return Response(WorkoutPlanSerializer(workouts, many=True).data)
+        return Response(
+            UserWorkoutPlanReadSerializer(workouts, many=True).data
+        )
     
     @extend_schema(
         summary="Create workout",
@@ -153,3 +173,111 @@ class WorkoutsDetailView(APIView):
         WorkoutService.delete_workout(pk)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+class UserWorkoutPlanView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Assign workout plan to user",
+        description="Assign an existing workout plan to the authenticated user with optional day of week",
+        request=UserWorkoutPlanWriteSerializer,
+        responses={
+            201: UserWorkoutPlanReadSerializer,
+            400: OpenApiResponse(description="Validation error"),
+            404: OpenApiResponse(description="Workout not found"),
+        },
+        examples=[
+            OpenApiExample(
+                "Assign workout (Monday)",
+                value={
+                    "workout_plan_id": 1,
+                    "day_of_week": 1,
+                    "is_active": True
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Assign without day",
+                value={
+                    "workout_plan_id": 2,
+                    "is_active": False
+                },
+                request_only=True,
+            ),
+        ],
+    )
+    def post(self, request):
+        serializer = UserWorkoutPlanWriteSerializer(
+            data=request.data,
+            context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        obj = WorkoutService.assign_workout_to_user(
+            user=request.user,
+            workout_plan_id=serializer.validated_data.get("workout_plan_id"),
+            day_of_week=serializer.validated_data.get("day_of_week"),
+            is_active=serializer.validated_data.get("is_active", True),
+        )
+
+        if not obj:
+            return Response({"detail": "Workout not found"}, status=404)
+
+        return Response(
+            UserWorkoutPlanReadSerializer(obj).data,
+            status=201
+        )
+    
+class UserWorkoutPlanDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Update user workout plan",
+        description="Update assigned workout (change day or active status)",
+        request=UserWorkoutPlanWriteSerializer,
+        responses={
+            200: UserWorkoutPlanReadSerializer,
+            400: OpenApiResponse(description="Validation error"),
+            404: OpenApiResponse(description="Not found"),
+        },
+        examples=[
+            OpenApiExample(
+                "Change day",
+                value={
+                    "day_of_week": 3
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Set as active",
+                value={
+                    "is_active": True
+                },
+                request_only=True,
+            ),
+        ],
+    )
+    def patch(self, request, pk):
+        instance = UserWorkoutPlan.objects.filter(
+            pk=pk,
+            user=request.user
+        ).first()
+
+        if not instance:
+            return Response({"detail": "Not found"}, status=404)
+
+        serializer = UserWorkoutPlanWriteSerializer(
+            instance=instance,
+            data=request.data,
+            partial=True,
+            context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        updated = WorkoutService.update_user_workout_plan(
+            instance,
+            **serializer.validated_data
+        )
+
+        return Response(UserWorkoutPlanReadSerializer(updated).data)

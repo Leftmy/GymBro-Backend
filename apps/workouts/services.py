@@ -1,15 +1,39 @@
 from django.db import transaction
 from apps.users.models import User
+from apps.workouts.models.user_workout_plan import UserWorkoutPlan
 from .models.workout_plan import WorkoutPlan
 from .models.workout_plan_exercise import WorkoutPlanExercise
 from apps.exercises.models import Exercise
 
-
+DAY_MAP = {
+        "monday": 1,
+        "tuesday": 2,
+        "wednesday": 3,
+        "thursday": 4,
+        "friday": 5,
+        "saturday": 6,
+        "sunday": 7,
+    }
 class WorkoutService:
-
     @staticmethod
     def get_all_user_workouts(user: User):
-        return WorkoutPlan.objects.filter(created_by=user)
+        return UserWorkoutPlan.objects.filter(user=user)
+
+    @staticmethod
+    def filter_user_workouts_by_day(workouts, day: str):
+        if day and day != "all":
+            day = DAY_MAP.get(day.lower(), day)
+
+            try:
+                day = int(day)
+            except ValueError:
+                raise ValueError("Invalid day")
+
+            workouts = workouts.filter(day_of_week=day)
+
+            workouts = workouts.filter(day_of_week=day)
+
+        return workouts
 
     @staticmethod
     def get_workout_by_name(name: str, user: User = None):
@@ -131,3 +155,40 @@ class WorkoutService:
             )
 
         return result
+    
+    @staticmethod
+    def assign_workout_to_user(*, user, workout_plan_id, day_of_week=None, is_active=True):
+        workout = WorkoutPlan.objects.filter(id=workout_plan_id).first()
+        if not workout:
+            return None
+
+        with transaction.atomic():
+            # 🔹 only one active
+            if is_active:
+                UserWorkoutPlan.objects.filter(
+                    user=user,
+                    is_active=True
+                ).update(is_active=False)
+
+            return UserWorkoutPlan.objects.create(
+                user=user,
+                workout_plan=workout,
+                day_of_week=day_of_week,
+                is_active=is_active,
+            )
+
+    @staticmethod
+    def update_user_workout_plan(instance, **data):
+        with transaction.atomic():
+            if data.get("is_active"):
+                UserWorkoutPlan.objects.filter(
+                    user=instance.user,
+                    is_active=True
+                ).exclude(pk=instance.pk).update(is_active=False)
+
+            for attr in ["day_of_week", "is_active"]:
+                if attr in data:
+                    setattr(instance, attr, data[attr])
+
+            instance.save()
+            return instance

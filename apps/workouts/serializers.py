@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.exercises.serializers import ExerciseSerializer
+from apps.workouts.models.user_workout_plan import UserWorkoutPlan
 from apps.workouts.models.workout_plan import WorkoutPlan
 from apps.workouts.models.workout_plan_exercise import WorkoutPlanExercise
 
@@ -33,6 +34,17 @@ class WorkoutPlanSerializer(serializers.ModelSerializer):
             "exercises",
         ]
 
+class UserWorkoutPlanReadSerializer(serializers.ModelSerializer):
+    workout = WorkoutPlanSerializer(source="workout_plan")
+
+    class Meta:
+        model = UserWorkoutPlan
+        fields = [
+            "id",
+            "day_of_week",
+            "is_active",
+            "workout",
+        ]
 
 # ------------------------
 # 🔹 WRITE SERIALIZERS
@@ -62,6 +74,36 @@ class ValidateWorkoutExercisesMixin:
             raise serializers.ValidationError("Duplicate exercises")
 
         return value
+    
+class UserWorkoutPlanWriteSerializer(serializers.Serializer):
+    workout_plan_id = serializers.IntegerField(required=False)
+    day_of_week = serializers.ChoiceField(
+        choices=UserWorkoutPlan._meta.get_field("day_of_week").choices,
+        required=False,
+        allow_null=True
+    )
+    is_active = serializers.BooleanField(required=False)
+
+    def validate(self, data):
+        user = self.context["request"].user
+
+        day = data.get("day_of_week")
+
+        if day is not None:
+            qs = UserWorkoutPlan.objects.filter(
+                user=user,
+                day_of_week=day
+            )
+
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+
+            if qs.exists():
+                raise serializers.ValidationError({
+                    "day_of_week": "You already have a workout for this day"
+                })
+
+        return data
 
 
 class WorkoutCreateSerializer(ValidateWorkoutExercisesMixin, serializers.Serializer):
