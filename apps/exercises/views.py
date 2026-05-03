@@ -114,7 +114,12 @@ class ExerciseView(APIView):
             if not exercise: return Response(status=404)
             return Response(ExerciseSerializer(exercise).data)
         
-        only_primary = request.query_params.get('primary', 'false').lower() == 'true'
+        primary_param = request.query_params.get('primary')
+
+        if primary_param is None:
+            only_primary = None
+        else:
+            only_primary = primary_param.lower() == 'true'
         exercises = ExerciseService.get_all_exercises(
             muscle_slug=request.query_params.get('muscle'),
             only_primary=only_primary,

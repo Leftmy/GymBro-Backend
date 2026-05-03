@@ -44,22 +44,21 @@ class MuscleService:
     
 class ExerciseService:
     @staticmethod
-    def get_all_exercises(*, muscle_slug: str = None, only_primary: bool = None, difficulty: int = None, equipment: str = None ):
-
+    def get_all_exercises(
+    *,
+    muscle_slug: str = None,
+    only_primary: bool = None,
+    difficulty: int = None,
+    equipment: str = None
+    ):
         qs = Exercise.objects.prefetch_related("muscles").all()
 
         if muscle_slug:
-            if only_primary is None:
-                qs = qs.filter(muscle_links__muscle__slug=muscle_slug)
-            else:
-                qs = qs.filter(
-                    muscle_links__muscle__slug=muscle_slug,
-                    muscle_links__is_primary=only_primary
-                )
+            qs = qs.filter(muscle_links__muscle__slug=muscle_slug)
 
         if only_primary is not None:
             qs = qs.filter(muscle_links__is_primary=only_primary)
-        
+
         if difficulty:
             qs = qs.filter(difficulty=difficulty)
 
