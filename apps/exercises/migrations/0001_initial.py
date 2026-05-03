@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
                 ('uuid', models.UUIDField(db_index=True, default=uuid.uuid4, unique=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('is_primary', models.BooleanField(default=False)),
+                # ('is_primary', models.BooleanField(default=False)),
                 ('exercise', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='muscle_links', to='exercises.exercise')),
                 ('muscle', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='exercise_links', to='exercises.musclegroup')),
             ],

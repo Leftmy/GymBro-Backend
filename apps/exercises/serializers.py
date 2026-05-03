@@ -29,7 +29,7 @@ class ExerciseSerializer(serializers.ModelSerializer):
 
 class ExerciseMuscleMapSerializer(serializers.Serializer):
     slug = serializers.SlugField()
-    is_primary = serializers.BooleanField(default=False)
+    # is_primary = serializers.BooleanField(default=False)
 
 
 class ExerciseCreateSerializer(serializers.Serializer):

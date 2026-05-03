@@ -47,7 +47,7 @@ class ExerciseService:
     def get_all_exercises(
     *,
     muscle_slug: str = None,
-    only_primary: bool = None,
+    # only_primary: bool = None,
     difficulty: int = None,
     equipment: str = None
     ):
@@ -56,8 +56,9 @@ class ExerciseService:
         if muscle_slug:
             qs = qs.filter(muscle_links__muscle__slug=muscle_slug)
 
-        if only_primary is not None:
+        """ if only_primary is not None:
             qs = qs.filter(muscle_links__is_primary=only_primary)
+        """
 
         if difficulty:
             qs = qs.filter(difficulty=difficulty)
@@ -152,7 +153,7 @@ class ExerciseService:
                         ExerciseMuscle(
                             exercise=exercise,
                             muscle=muscle,
-                            is_primary=item.get("is_primary", False),
+                            # is_primary=item.get("is_primary", False),
                         )
                     )
 

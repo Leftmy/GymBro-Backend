@@ -13,7 +13,7 @@ class ExerciseMuscle(BaseModel):
         on_delete=models.CASCADE,
         related_name="exercise_links"
     )
-    is_primary = models.BooleanField(default=False)
+    # is_primary = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
