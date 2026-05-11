@@ -8,8 +8,10 @@ class BroCreateSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
 
 
-class BroActionSerializer(serializers.Serializer):
-    bro_id = serializers.IntegerField()
+class BroUpdateSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(
+        choices=["accepted"]
+    )
 
 
 class BroSerializer(serializers.ModelSerializer):

@@ -8,6 +8,7 @@ class Bro(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
         ACCEPTED = "accepted", "Accepted"
+        DECLINED = "declined", "Declined"
 
     sender = models.ForeignKey(
         User,
