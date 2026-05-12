@@ -81,12 +81,6 @@ class BroDetailAPIView(APIView):
         return Response(BroSerializer(bro).data)
 
     @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="bro_id",
-                type=int,
-            ),
-        ],
         responses={204: None},
     )
     def delete(self, request, bro_id):

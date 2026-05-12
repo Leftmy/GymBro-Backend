@@ -32,7 +32,7 @@ class BroCommands:
     @staticmethod
     def update_bro_status(bro_id: int, user_id: int, status: str):
         bro = Bro.objects.filter(
-            id=bro_id,
+            sender_id=bro_id,
             receiver_id=user_id,
         ).first()
 
