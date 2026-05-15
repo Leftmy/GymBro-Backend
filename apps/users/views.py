@@ -8,7 +8,7 @@ from .serializers import (
     UserSerializer,
 )
 from .services import UserService
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 
 # Create your views here.
@@ -52,6 +52,60 @@ class LoginView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
     
+
+class UserSearchAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="search",
+                type=str,
+                required=True,
+                description="Search users by username",
+            ),
+            OpenApiParameter(
+                name="limit",
+                type=int,
+                required=False,
+                description="Number of results (default 10, max 20)",
+            ),
+            OpenApiParameter(
+                name="offset",
+                type=int,
+                required=False,
+                description="Pagination offset",
+            ),
+        ],
+        responses={200: UserSerializer(many=True)},
+    )
+    def get(self, request):
+        query = request.query_params.get("search", "").strip()
+
+        # 1. basic protection from noise-queries
+        if len(query) < 2:
+            return Response([], status=status.HTTP_200_OK)
+
+        # 2. pagination params
+        try:
+            limit = int(request.query_params.get("limit", 10))
+        except (TypeError, ValueError):
+            limit = 10
+
+        try:
+            offset = int(request.query_params.get("offset", 0))
+        except (TypeError, ValueError):
+            offset = 0
+
+        users = UserService.search_users(
+            query=query,
+            limit=limit,
+            offset=offset,
+        )
+
+        serializer = UserSerializer(users, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UserView(APIView):
     permission_classes = [IsAuthenticated]

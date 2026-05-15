@@ -1,5 +1,3 @@
-# apps/users/management/commands/seed_users.py
-
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -18,7 +16,6 @@ class Command(BaseCommand):
             "--count",
             type=int,
             default=20,
-            help="Number of users to create"
         )
 
     @transaction.atomic
@@ -40,17 +37,13 @@ class Command(BaseCommand):
                     username=username,
                     email=email,
                     role=role,
+                    username_normalized=username.lower().strip(),
                 )
             )
 
-        created_users = User.objects.bulk_create(users_to_create)
+        User.objects.bulk_create(users_to_create)
 
-        # bulk_create не викликає save()
-        for user in created_users:
-            user.set_password("password123")
-            user.save(update_fields=["password"])
-
-        # Create admin
+        # admin
         if not User.objects.filter(email="admin@example.com").exists():
             User.objects.create_superuser(
                 username="admin",

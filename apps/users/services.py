@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
 from .models import User, UserRole
+from django.db import transaction
 
 class UserService:
     @staticmethod
@@ -21,6 +22,27 @@ class UserService:
             return None
 
     @staticmethod
+    def search_users(
+        query: str,
+        limit: int = 10,
+        offset: int = 0,
+    ):
+
+        query = query.lower().strip()
+
+        return (
+            User.objects
+            .filter(
+                username_normalized__istartswith=query
+            )
+            .exclude(is_active=False)
+            .order_by("username_normalized")
+            [offset:offset + limit]
+        )
+
+
+    @staticmethod
+    @transaction.atomic
     def create_user(*, username: str, email: str, password: str, role: str = UserRole.CLIENT) -> User:
         if role == UserRole.ADMIN:
             return User.objects.create_superuser(
@@ -38,6 +60,7 @@ class UserService:
         )
     
     @staticmethod
+    @transaction.atomic
     def update_user(user_id: int, **data) -> User | None:
         """
         Updates a specific user.
@@ -70,10 +93,10 @@ class UserService:
         user = authenticate(email=email, password=password)
         
         if not user:
-            raise AuthenticationFailed("Невірний email або пароль")
+            raise AuthenticationFailed("Wrong email or password")
         
         if not user.is_active:
-            raise AuthenticationFailed("Користувач деактивований")
+            raise AuthenticationFailed("User's unactive")
 
         refresh = RefreshToken.for_user(user)
         return {
