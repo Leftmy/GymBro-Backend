@@ -53,7 +53,13 @@ def get_post_with_comments(post_id):
     return Post.objects.prefetch_related("comments").filter(id=post_id).first()
 
 
-def list_posts(*, status=None, author=None):
+def list_posts(
+    *,
+    status=None,
+    author=None,
+    limit=20,
+    offset=0,
+):
     qs = Post.objects.select_related("author")
 
     if status:
@@ -62,7 +68,9 @@ def list_posts(*, status=None, author=None):
     if author:
         qs = qs.filter(author=author)
 
-    return qs
+    limit = min(limit, 50)
+
+    return qs[offset:offset + limit]
 
 
 
