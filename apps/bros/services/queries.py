@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.db.models import Q
 from apps.bros.models import Bro
 from apps.bros.constants import BroListType

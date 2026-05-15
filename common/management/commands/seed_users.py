@@ -57,3 +57,4 @@ class Command(BaseCommand):
                 f"Successfully created {count} users"
             )
         )
+        

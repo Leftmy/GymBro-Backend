@@ -5,7 +5,7 @@ from apps.users.serializers import UserSerializer
 
 
 class BroCreateSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField()
+    user_uuid = serializers.UUIDField()
 
 
 class BroUpdateSerializer(serializers.Serializer):

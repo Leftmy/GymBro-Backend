@@ -52,7 +52,7 @@ class BroAPIView(APIView):
 
         bro = BroCommands.send_bro_request(
             sender_id=request.user.id,
-            receiver_id=serializer.validated_data["user_id"],
+            receiver_uuid=serializer.validated_data["user_uuid"],
         )
 
         return Response(

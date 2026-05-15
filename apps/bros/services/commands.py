@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
@@ -9,16 +11,28 @@ User = get_user_model()
 class BroCommands:
 
     @staticmethod
-    def send_bro_request(sender_id: int, receiver_id: int):
-        if sender_id == receiver_id:
-            raise ValueError("You cannot add yourself")
+    def send_bro_request(
+        sender_id: int,
+        receiver_uuid: UUID,
+    ):
 
-        if not User.objects.filter(id=receiver_id).exists():
+        receiver = (
+            User.objects
+            .only("id")
+            .filter(uuid=receiver_uuid)
+            .first()
+        )
+
+        if not receiver:
             raise ValueError("User does not exist")
 
+        if sender_id == receiver.id:
+            raise ValueError("You cannot add yourself")
+
         exists = Bro.objects.filter(
-            Q(sender_id=sender_id, receiver_id=receiver_id)
-            | Q(sender_id=receiver_id, receiver_id=sender_id)
+            Q(sender_id=sender_id, receiver_id=receiver.id)
+            |
+            Q(sender_id=receiver.id, receiver_id=sender_id)
         ).exists()
 
         if exists:
@@ -26,13 +40,18 @@ class BroCommands:
 
         return Bro.objects.create(
             sender_id=sender_id,
-            receiver_id=receiver_id,
+            receiver_id=receiver.id,
         )
 
     @staticmethod
-    def update_bro_status(bro_id: int, user_id: int, status: str):
+    def update_bro_status(
+        bro_id: int,
+        user_id: int,
+        status: str,
+    ):
+
         bro = Bro.objects.filter(
-            sender_id=bro_id,
+            id=bro_id,
             receiver_id=user_id,
         ).first()
 
@@ -47,8 +66,9 @@ class BroCommands:
 
         bro.status = status
         bro.save(update_fields=["status"])
-        return bro
 
+        return bro
+    
     @staticmethod
     def delete_bro(bro_id: int, user_id: int):
         deleted_count, _ = Bro.objects.filter(
