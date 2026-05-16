@@ -1,0 +1,133 @@
+[
+  {
+    "name": "Bench Press",
+    "description": "Classic chest strength exercise.",
+    "difficulty": 2,
+    "equipment": "barbell",
+    "video_url": "",
+    "muscles": [
+      "Chest",
+      "Triceps",
+      "Shoulders"
+    ]
+  },
+  {
+    "name": "Incline Dumbbell Press",
+    "description": "Upper chest pressing movement.",
+    "difficulty": 2,
+    "equipment": "dumbbell",
+    "video_url": "",
+    "muscles": [
+      "Chest",
+      "Shoulders",
+      "Triceps"
+    ]
+  },
+  {
+    "name": "Pull Up",
+    "description": "Bodyweight vertical pulling exercise.",
+    "difficulty": 2,
+    "equipment": "bodyweight",
+    "video_url": "",
+    "muscles": [
+      "Back",
+      "Biceps"
+    ]
+  },
+  {
+    "name": "Barbell Row",
+    "description": "Compound back exercise.",
+    "difficulty": 2,
+    "equipment": "barbell",
+    "video_url": "",
+    "muscles": [
+      "Back",
+      "Biceps"
+    ]
+  },
+  {
+    "name": "Squat",
+    "description": "Compound lower body movement.",
+    "difficulty": 2,
+    "equipment": "barbell",
+    "video_url": "",
+    "muscles": [
+      "Quadriceps",
+      "Glutes",
+      "Hamstrings"
+    ]
+  },
+  {
+    "name": "Romanian Deadlift",
+    "description": "Posterior chain focused hip hinge.",
+    "difficulty": 3,
+    "equipment": "barbell",
+    "video_url": "",
+    "muscles": [
+      "Hamstrings",
+      "Glutes",
+      "Back"
+    ]
+  },
+  {
+    "name": "Shoulder Press",
+    "description": "Overhead pressing movement.",
+    "difficulty": 2,
+    "equipment": "dumbbell",
+    "video_url": "",
+    "muscles": [
+      "Shoulders",
+      "Triceps"
+    ]
+  },
+  {
+    "name": "Lateral Raise",
+    "description": "Shoulder isolation exercise.",
+    "difficulty": 1,
+    "equipment": "dumbbell",
+    "video_url": "",
+    "muscles": [
+      "Shoulders"
+    ]
+  },
+  {
+    "name": "Bicep Curl",
+    "description": "Arm isolation exercise.",
+    "difficulty": 1,
+    "equipment": "dumbbell",
+    "video_url": "",
+    "muscles": [
+      "Biceps"
+    ]
+  },
+  {
+    "name": "Tricep Pushdown",
+    "description": "Cable tricep isolation exercise.",
+    "difficulty": 1,
+    "equipment": "machine",
+    "video_url": "",
+    "muscles": [
+      "Triceps"
+    ]
+  },
+  {
+    "name": "Calf Raise",
+    "description": "Isolation movement for calves.",
+    "difficulty": 1,
+    "equipment": "bodyweight",
+    "video_url": "",
+    "muscles": [
+      "Calves"
+    ]
+  },
+  {
+    "name": "Plank",
+    "description": "Core stabilization exercise.",
+    "difficulty": 1,
+    "equipment": "bodyweight",
+    "video_url": "",
+    "muscles": [
+      "Abs"
+    ]
+  }
+]
