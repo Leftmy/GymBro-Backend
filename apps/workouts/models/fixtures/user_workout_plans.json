@@ -1,0 +1,23 @@
+[
+  {
+    "username": "admin",
+    "workout_plan": "Push Day",
+    "is_active": true,
+    "started_at": "2026-05-01",
+    "day_of_week": 1
+  },
+  {
+    "username": "admin",
+    "workout_plan": "Pull Day",
+    "is_active": false,
+    "started_at": "2026-05-01",
+    "day_of_week": 3
+  },
+  {
+    "username": "admin",
+    "workout_plan": "Leg Day",
+    "is_active": false,
+    "started_at": "2026-05-01",
+    "day_of_week": 5
+  }
+]

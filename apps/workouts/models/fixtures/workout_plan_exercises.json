@@ -1,0 +1,117 @@
+[
+  {
+    "workout_plan": "Push Day",
+    "exercise": "Bench Press",
+    "sets": 4,
+    "reps": 8,
+    "rest_seconds": 90,
+    "order": 1
+  },
+  {
+    "workout_plan": "Push Day",
+    "exercise": "Incline Dumbbell Press",
+    "sets": 3,
+    "reps": 10,
+    "rest_seconds": 60,
+    "order": 2
+  },
+  {
+    "workout_plan": "Push Day",
+    "exercise": "Shoulder Press",
+    "sets": 3,
+    "reps": 10,
+    "rest_seconds": 60,
+    "order": 3
+  },
+  {
+    "workout_plan": "Push Day",
+    "exercise": "Tricep Pushdown",
+    "sets": 3,
+    "reps": 12,
+    "rest_seconds": 45,
+    "order": 4
+  },
+
+  {
+    "workout_plan": "Pull Day",
+    "exercise": "Pull Up",
+    "sets": 4,
+    "reps": 8,
+    "rest_seconds": 90,
+    "order": 1
+  },
+  {
+    "workout_plan": "Pull Day",
+    "exercise": "Barbell Row",
+    "sets": 4,
+    "reps": 10,
+    "rest_seconds": 75,
+    "order": 2
+  },
+  {
+    "workout_plan": "Pull Day",
+    "exercise": "Bicep Curl",
+    "sets": 3,
+    "reps": 12,
+    "rest_seconds": 45,
+    "order": 3
+  },
+
+  {
+    "workout_plan": "Leg Day",
+    "exercise": "Squat",
+    "sets": 4,
+    "reps": 6,
+    "rest_seconds": 120,
+    "order": 1
+  },
+  {
+    "workout_plan": "Leg Day",
+    "exercise": "Romanian Deadlift",
+    "sets": 4,
+    "reps": 8,
+    "rest_seconds": 90,
+    "order": 2
+  },
+  {
+    "workout_plan": "Leg Day",
+    "exercise": "Calf Raise",
+    "sets": 4,
+    "reps": 15,
+    "rest_seconds": 30,
+    "order": 3
+  },
+
+  {
+    "workout_plan": "Full Body Beginner",
+    "exercise": "Squat",
+    "sets": 3,
+    "reps": 10,
+    "rest_seconds": 60,
+    "order": 1
+  },
+  {
+    "workout_plan": "Full Body Beginner",
+    "exercise": "Bench Press",
+    "sets": 3,
+    "reps": 10,
+    "rest_seconds": 60,
+    "order": 2
+  },
+  {
+    "workout_plan": "Full Body Beginner",
+    "exercise": "Pull Up",
+    "sets": 3,
+    "reps": 6,
+    "rest_seconds": 90,
+    "order": 3
+  },
+  {
+    "workout_plan": "Full Body Beginner",
+    "exercise": "Plank",
+    "sets": 3,
+    "reps": 60,
+    "rest_seconds": 30,
+    "order": 4
+  }
+]

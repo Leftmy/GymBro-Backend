@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Push Day",
+    "description": "Chest, shoulders, and triceps focused workout.",
+    "is_public": true,
+    "created_by": null
+  },
+  {
+    "name": "Pull Day",
+    "description": "Back and biceps focused workout.",
+    "is_public": true,
+    "created_by": null
+  },
+  {
+    "name": "Leg Day",
+    "description": "Lower body strength and hypertrophy workout.",
+    "is_public": true,
+    "created_by": null
+  },
+  {
+    "name": "Full Body Beginner",
+    "description": "Simple beginner-friendly full body routine.",
+    "is_public": true,
+    "created_by": null
+  },
+  {
+    "name": "Upper Body Strength",
+    "description": "Upper body focused strength training program.",
+    "is_public": true,
+    "created_by": null
+  },
+  {
+    "name": "Lower Body Power",
+    "description": "Lower body power and explosiveness routine.",
+    "is_public": true,
+    "created_by": null
+  }
+]
