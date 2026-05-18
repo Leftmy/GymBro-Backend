@@ -25,7 +25,7 @@ class PostAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-    summary="Get posts or single post",
+    summary="Get posts",
     parameters=[
         OpenApiParameter(
             name="status",
@@ -45,19 +45,7 @@ class PostAPIView(APIView):
     ],
     responses=PostSerializer(many=True),
 )
-    def get(self, request, post_id=None):
-
-        # single post
-        if post_id:
-            post = get_post_by_id(post_id)
-
-            if not post:
-                return Response(
-                    {"detail": "Not found"},
-                    status=404,
-                )
-
-            return Response(PostSerializer(post).data)
+    def get(self, request):
 
         # query params
         status_param = request.query_params.get("status")
@@ -102,6 +90,21 @@ class PostAPIView(APIView):
     
 class PostDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Get single post",
+        responses=PostSerializer,
+    )
+    def get(self, request, post_id):
+        post = get_post_by_id(post_id)
+
+        if not post:
+            return Response(
+                {"detail": "Not found"},
+                status=404,
+            )
+
+        return Response(PostSerializer(post).data)
 
     @extend_schema(
         summary="Update post",
