@@ -60,15 +60,17 @@ class PostAPIView(APIView):
         except ValueError:
             offset = 0
 
-        posts = list_posts(
-            status=status_param,
-            limit=limit,
-            offset=offset,
-        )
+        queryset = list_posts(status=status_param)
 
-        return Response(
-            PostSerializer(posts, many=True).data
-        )
+        total = queryset.count()
+        posts = queryset[offset:offset + limit]
+
+        serializer = PostSerializer(posts, many=True)
+
+        return Response({
+            "total": total,
+            "results": serializer.data,
+        })
 
     @extend_schema(
         summary="Create post",

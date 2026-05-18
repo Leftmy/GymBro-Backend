@@ -57,8 +57,6 @@ def list_posts(
     *,
     status=None,
     author=None,
-    limit=20,
-    offset=0,
 ):
     qs = Post.objects.select_related("author")
 
@@ -68,9 +66,7 @@ def list_posts(
     if author:
         qs = qs.filter(author=author)
 
-    limit = min(limit, 50)
-
-    return qs[offset:offset + limit]
+    return qs
 
 
 
