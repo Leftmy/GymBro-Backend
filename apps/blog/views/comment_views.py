@@ -27,16 +27,7 @@ class CommentCreateAPIView(APIView):
     @extend_schema(
         summary="Create comment",
         request=CommentCreateSerializer,
-        responses={
-            201: OpenApiResponse(
-                response={
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "integer"}
-                    }
-                }
-            )
-        }
+        responses=CommentSerializer
     )
     def post(self, request):
         serializer = CommentCreateSerializer(data=request.data)
@@ -48,7 +39,7 @@ class CommentCreateAPIView(APIView):
             body=serializer.validated_data["body"],
         )
 
-        return Response({"id": comment.id}, status=201)
+        return Response(CommentSerializer(comment).data, status=201)
     
 class CommentDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated]
