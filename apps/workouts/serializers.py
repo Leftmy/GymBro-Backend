@@ -6,10 +6,6 @@ from apps.workouts.models.workout_plan import WorkoutPlan
 from apps.workouts.models.workout_plan_exercise import WorkoutPlanExercise
 
 
-# ------------------------
-# 🔹 READ SERIALIZERS
-# ------------------------
-
 class WorkoutPlanExerciseSerializer(serializers.ModelSerializer):
     exercise = ExerciseSerializer()
 
@@ -46,9 +42,6 @@ class UserWorkoutPlanReadSerializer(serializers.ModelSerializer):
             "workout",
         ]
 
-# ------------------------
-# 🔹 WRITE SERIALIZERS
-# ------------------------
 
 class WorkoutExerciseMapSerializer(serializers.Serializer):
     slug = serializers.SlugField()
@@ -60,15 +53,14 @@ class WorkoutExerciseMapSerializer(serializers.Serializer):
 
 class ValidateWorkoutExercisesMixin:
     def validate_exercises(self, value):
+        # When the field is present it must be a non-empty list
         if not value:
-            return value
+            raise serializers.ValidationError("At least one exercise is required")
 
-        # 🔹 order validation
         orders = [item["order"] for item in value]
         if len(orders) != len(set(orders)):
             raise serializers.ValidationError("Order must be unique")
 
-        # 🔹 slug duplicates
         slugs = [item["slug"] for item in value]
         if len(slugs) != len(set(slugs)):
             raise serializers.ValidationError("Duplicate exercises")
@@ -88,6 +80,12 @@ class UserWorkoutPlanWriteSerializer(serializers.Serializer):
         user = self.context["request"].user
 
         day = data.get("day_of_week")
+
+        # When creating (no instance) workout_plan_id is required
+        if not self.instance and not data.get("workout_plan_id"):
+            raise serializers.ValidationError({
+                "workout_plan_id": "This field is required."
+            })
 
         if day is not None:
             qs = UserWorkoutPlan.objects.filter(

@@ -7,7 +7,13 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema, OpenApiRespon
 
 from apps.workouts.models.user_workout_plan import UserWorkoutPlan
 from apps.workouts.models.workout_plan import WorkoutPlan
-from apps.workouts.services import WorkoutService
+from apps.workouts.services import (
+    WorkoutCommands,
+    WorkoutQueries,
+    WorkoutAlreadyExistsError,
+    InvalidExercisesError,
+    WorkoutNotFoundError,
+)
 from apps.workouts.serializers import (
     UserWorkoutPlanReadSerializer,
     UserWorkoutPlanWriteSerializer,
@@ -30,8 +36,8 @@ class WorkoutsView(APIView):
     def get(self, request):
         day = request.query_params.get("day")
 
-        user_workouts = WorkoutService.get_all_user_workouts(request.user)
-        workouts = WorkoutService.filter_user_workouts_by_day(user_workouts, day)
+        user_workouts = WorkoutQueries.get_all_user_workouts(request.user)
+        workouts = WorkoutQueries.filter_user_workouts_by_day(user_workouts, day)
 
         workouts = (
             workouts
@@ -82,25 +88,20 @@ class WorkoutsView(APIView):
     def post(self, request):
         serializer = WorkoutCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        workout = WorkoutService.create_workout(
-            name=serializer.validated_data["name"],
-            description=serializer.validated_data.get("description", ""),
-            created_by=request.user,
-            public=serializer.validated_data.get("is_public", False),
-            exercises=serializer.validated_data["exercises"],
-        )
-
-        if not workout:
-            return Response(
-                {"detail": "Workout already exists"},
-                status=status.HTTP_400_BAD_REQUEST,
+        try:
+            workout = WorkoutCommands.create_workout(
+                name=serializer.validated_data["name"],
+                description=serializer.validated_data.get("description", ""),
+                created_by=request.user,
+                public=serializer.validated_data.get("is_public", False),
+                exercises=serializer.validated_data["exercises"],
             )
+        except WorkoutAlreadyExistsError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except InvalidExercisesError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(
-            WorkoutPlanSerializer(workout).data,
-            status=status.HTTP_201_CREATED,
-        )
+        return Response(WorkoutPlanSerializer(workout).data, status=status.HTTP_201_CREATED)
     
 class WorkoutsDetailView(APIView):
     @extend_schema(
@@ -111,20 +112,13 @@ class WorkoutsDetailView(APIView):
         },
     )
     def get(self, request, pk=None):
-        workout = WorkoutService.get_workout_by_id(pk)
+        workout = WorkoutQueries.get_workout_by_id(pk)
 
         if not workout:
             return Response({"detail": "Not found"}, status=404)
 
         if workout.created_by != request.user and not workout.is_public:
             return Response({"detail": "Forbidden"}, status=403)
-
-        workout = (
-            WorkoutPlan.objects
-            .filter(pk=pk)
-            .prefetch_related("plan_exercises__exercise__muscles")
-            .first()
-        )
 
         return Response(WorkoutPlanSerializer(workout).data)
 
@@ -136,8 +130,7 @@ class WorkoutsDetailView(APIView):
     def patch(self, request, pk=None):
         serializer = WorkoutUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        workout = WorkoutService.get_workout_by_id(pk)
+        workout = WorkoutQueries.get_workout_by_id(pk)
 
         if not workout:
             return Response({"detail": "Not found"}, status=404)
@@ -145,15 +138,15 @@ class WorkoutsDetailView(APIView):
         if workout.created_by != request.user:
             return Response({"detail": "Forbidden"}, status=403)
 
-        updated = WorkoutService.update_workout(
-            pk, **serializer.validated_data
-        )
+        try:
+            updated = WorkoutCommands.update_workout(pk, **serializer.validated_data)
+        except WorkoutNotFoundError:
+            return Response({"detail": "Not found"}, status=404)
+        except InvalidExercisesError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(WorkoutPlanSerializer(updated).data)
 
-    # ------------------------
-    # 🔹 DELETE
-    # ------------------------
     @extend_schema(
         summary="Delete workout",
         responses={
@@ -162,7 +155,7 @@ class WorkoutsDetailView(APIView):
         },
     )
     def delete(self, request, pk=None):
-        workout = WorkoutService.get_workout_by_id(pk)
+        workout = WorkoutQueries.get_workout_by_id(pk)
 
         if not workout:
             return Response({"detail": "Not found"}, status=404)
@@ -170,7 +163,10 @@ class WorkoutsDetailView(APIView):
         if workout.created_by != request.user:
             return Response({"detail": "Forbidden"}, status=403)
 
-        WorkoutService.delete_workout(pk)
+        deleted = WorkoutCommands.delete_workout(pk)
+
+        if not deleted:
+            return Response({"detail": "Not found"}, status=404)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
     
@@ -214,20 +210,17 @@ class UserWorkoutPlanView(APIView):
         )
         serializer.is_valid(raise_exception=True)
 
-        obj = WorkoutService.assign_workout_to_user(
-            user=request.user,
-            workout_plan_id=serializer.validated_data.get("workout_plan_id"),
-            day_of_week=serializer.validated_data.get("day_of_week"),
-            is_active=serializer.validated_data.get("is_active", True),
-        )
-
-        if not obj:
+        try:
+            obj = WorkoutCommands.assign_workout_to_user(
+                user=request.user,
+                workout_plan_id=serializer.validated_data.get("workout_plan_id"),
+                day_of_week=serializer.validated_data.get("day_of_week"),
+                is_active=serializer.validated_data.get("is_active", True),
+            )
+        except WorkoutNotFoundError:
             return Response({"detail": "Workout not found"}, status=404)
 
-        return Response(
-            UserWorkoutPlanReadSerializer(obj).data,
-            status=201
-        )
+        return Response(UserWorkoutPlanReadSerializer(obj).data, status=201)
     
 class UserWorkoutPlanDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -275,9 +268,11 @@ class UserWorkoutPlanDetailView(APIView):
         )
         serializer.is_valid(raise_exception=True)
 
-        updated = WorkoutService.update_user_workout_plan(
-            instance,
-            **serializer.validated_data
-        )
+        try:
+            updated = WorkoutCommands.update_user_workout_plan(
+                instance.pk, **serializer.validated_data
+            )
+        except WorkoutNotFoundError:
+            return Response({"detail": "Not found"}, status=404)
 
         return Response(UserWorkoutPlanReadSerializer(updated).data)
