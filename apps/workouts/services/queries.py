@@ -21,18 +21,24 @@ class WorkoutQueries:
     }
 
     @staticmethod
-    def get_all_user_workouts(user: User) -> QuerySet[UserWorkoutPlan]:
+    def get_all_user_workouts(current_user: User, user_uuid: Optional[str] = None) -> QuerySet[UserWorkoutPlan]:
         """
         Fetch all workouts assigned to a user with optimized queries.
         
         Args:
-            user: The User instance
+            current_user: The User instance making the request
+            user_uuid: Optional UUID of the user to fetch workouts for. If provided, returns only public workouts.
             
         Returns:
             QuerySet of UserWorkoutPlan instances
         """
+        if user_uuid:
+            qs = UserWorkoutPlan.objects.filter(user__uuid=user_uuid, workout_plan__is_public=True)
+        else:
+            qs = UserWorkoutPlan.objects.filter(user=current_user)
+            
         return (
-            UserWorkoutPlan.objects.filter(user=user)
+            qs
             .select_related("workout_plan", "user")
             .prefetch_related("workout_plan__plan_exercises__exercise")
         )

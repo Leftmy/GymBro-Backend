@@ -1,3 +1,4 @@
+import uuid
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -29,14 +30,27 @@ class WorkoutsView(APIView):
                 type=str,
                 enum=['all', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'], 
             ),
+            OpenApiParameter(
+                name='user_uuid',
+                type=str,
+                required=False,
+                description="UUID of the user to fetch workouts for. If provided, returns only their public workouts."
+            ),
         ],
         summary="Get user workouts (optionally filtered by day)",
         responses=UserWorkoutPlanReadSerializer(many=True),
     )
     def get(self, request):
         day = request.query_params.get("day")
+        user_uuid = request.query_params.get("user_uuid")
 
-        user_workouts = WorkoutQueries.get_all_user_workouts(request.user)
+        if user_uuid is not None:
+            try:
+                uuid.UUID(user_uuid)
+            except ValueError:
+                return Response({"detail": "Invalid user_uuid format"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_workouts = WorkoutQueries.get_all_user_workouts(request.user, user_uuid=user_uuid)
         workouts = WorkoutQueries.filter_user_workouts_by_day(user_workouts, day)
 
         workouts = (
