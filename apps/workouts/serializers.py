@@ -82,7 +82,7 @@ class UserWorkoutPlanWriteSerializer(serializers.Serializer):
         day = data.get("day_of_week")
 
         # When creating (no instance) workout_plan_id is required
-        if not self.instance and not data.get("workout_plan_id"):
+        if not self.instance and data.get("workout_plan_id") is None:
             raise serializers.ValidationError({
                 "workout_plan_id": "This field is required."
             })

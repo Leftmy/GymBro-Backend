@@ -60,15 +60,20 @@ class WorkoutQueries:
         Raises:
             InvalidDayError: If day is invalid
         """
-        if not day or day.lower() == "all":
+        if day is None:
+            return workouts
+
+        day_normalized = str(day).strip().lower() 
+        
+        if not day_normalized or day_normalized == "all":
             return workouts
 
         # Try to convert day name to number
-        day_value = WorkoutQueries.DAY_MAP.get(day.lower())
+        day_value = WorkoutQueries.DAY_MAP.get(day_normalized)
         
         if day_value is None:
             try:
-                day_value = int(day)
+                day_value = int(day_normalized)
                 if not 1 <= day_value <= 7:
                     raise InvalidDayError(day)
             except (ValueError, TypeError):

@@ -10,6 +10,7 @@ from .exceptions import (
     InvalidExercisesError,
     ExerciseNotFoundError,
     WorkoutNotFoundError,
+    UserWorkoutPlanNotFoundError
 )
 
 
@@ -192,7 +193,7 @@ class WorkoutCommands:
         """
         instance = UserWorkoutPlan.objects.filter(pk=user_workout_plan_id).first()
         if not instance:
-            raise WorkoutNotFoundError(user_workout_plan_id)
+            raise UserWorkoutPlanNotFoundError(user_workout_plan_id)
 
         with transaction.atomic():
             # If activating, deactivate other active workouts for this user
@@ -304,8 +305,8 @@ class WorkoutCommands:
         for item in exercises:
             exercise = exercise_map.get(item["slug"])
             if not exercise:
-                # Skip non-existent exercises (could log a warning here)
-                continue
+                # TODO: add a better logging for errors 
+                raise ExerciseNotFoundError(item["slug"])
 
             result.append(
                 WorkoutPlanExercise(
