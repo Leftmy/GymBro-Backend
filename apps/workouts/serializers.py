@@ -87,6 +87,13 @@ class UserWorkoutPlanWriteSerializer(serializers.Serializer):
                 "workout_plan_id": "This field is required."
             })
 
+        # Reject workout_plan_id on update — the field is ignored by the
+        # update command, so accepting it would be misleading to clients.
+        if self.instance and "workout_plan_id" in data:
+            raise serializers.ValidationError({
+                "workout_plan_id": "Cannot change workout_plan on update."
+            })
+
         if day is not None:
             qs = UserWorkoutPlan.objects.filter(
                 user=user,

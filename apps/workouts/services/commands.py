@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict, Any
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from apps.users.models import User
 from apps.workouts.models.user_workout_plan import UserWorkoutPlan
 from apps.workouts.models.workout_plan import WorkoutPlan
@@ -166,12 +166,28 @@ class WorkoutCommands:
                     is_active=True
                 ).update(is_active=False)
 
-            return UserWorkoutPlan.objects.create(
-                user=user,
-                workout_plan=workout,
-                day_of_week=day_of_week,
-                is_active=is_active,
-            )
+            try:
+                with transaction.atomic():
+                    return UserWorkoutPlan.objects.create(
+                        user=user,
+                        workout_plan=workout,
+                        day_of_week=day_of_week,
+                        is_active=is_active,
+                    )
+            except IntegrityError:
+                # Retry deactivation and create sequence once on conflict
+                if is_active:
+                    UserWorkoutPlan.objects.filter(
+                        user=user,
+                        is_active=True
+                    ).update(is_active=False)
+
+                return UserWorkoutPlan.objects.create(
+                    user=user,
+                    workout_plan=workout,
+                    day_of_week=day_of_week,
+                    is_active=is_active,
+                )
 
     @staticmethod
     def update_user_workout_plan(
@@ -208,7 +224,18 @@ class WorkoutCommands:
                 if attr in data:
                     setattr(instance, attr, data[attr])
 
-            instance.save()
+            try:
+                with transaction.atomic():
+                    instance.save()
+            except IntegrityError:
+                # Retry deactivation and save sequence once on conflict
+                if data.get("is_active"):
+                    UserWorkoutPlan.objects.filter(
+                        user=instance.user,
+                        is_active=True
+                    ).exclude(pk=instance.pk).update(is_active=False)
+                instance.save()
+
             return instance
 
     @staticmethod
