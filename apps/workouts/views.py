@@ -14,6 +14,7 @@ from apps.workouts.services import (
     WorkoutAlreadyExistsError,
     InvalidExercisesError,
     WorkoutNotFoundError,
+    ExerciseNotFoundError,
 )
 from apps.workouts.serializers import (
     UserWorkoutPlanReadSerializer,
@@ -114,6 +115,8 @@ class WorkoutsView(APIView):
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         except InvalidExercisesError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except ExerciseNotFoundError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(WorkoutPlanSerializer(workout).data, status=status.HTTP_201_CREATED)
     
@@ -158,6 +161,8 @@ class WorkoutsDetailView(APIView):
             return Response({"detail": "Not found"}, status=404)
         except InvalidExercisesError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except ExerciseNotFoundError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(WorkoutPlanSerializer(updated).data)
 
@@ -186,7 +191,7 @@ class WorkoutsDetailView(APIView):
     
 
 class UserWorkoutPlanView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="Assign workout plan to user",
@@ -237,7 +242,7 @@ class UserWorkoutPlanView(APIView):
         return Response(UserWorkoutPlanReadSerializer(obj).data, status=201)
     
 class UserWorkoutPlanDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="Update user workout plan",

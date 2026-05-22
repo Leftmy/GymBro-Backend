@@ -34,10 +34,9 @@ class UserWorkoutPlan(BaseModel):
                 name="unique_active_plan_per_user"
             ),
             models.UniqueConstraint(
-                fields=["user", "day_of_week"],
-                name="unique_day_per_user"
+            fields=["user", "day_of_week", "workout_plan"],
+            name="unique_workout_per_day_per_user"
             ),
-            models.UniqueConstraint(fields=["user", "workout_plan"], name="unique_user_plan")
         ]
         indexes = [
             models.Index(fields=["user", "is_active"]),

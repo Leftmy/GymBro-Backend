@@ -87,17 +87,24 @@ class UserWorkoutPlanWriteSerializer(serializers.Serializer):
                 "workout_plan_id": "This field is required."
             })
 
-        # Reject workout_plan_id on update — the field is ignored by the
-        # update command, so accepting it would be misleading to clients.
+        # Reject workout_plan_id on update
         if self.instance and "workout_plan_id" in data:
             raise serializers.ValidationError({
                 "workout_plan_id": "Cannot change workout_plan on update."
             })
 
-        if day is not None:
+        # Get workout plan for validation
+        if self.instance:
+            workout_plan = self.instance.workout_plan
+        else:
+            workout_plan = data.get("workout_plan")
+
+        # Prevent duplicate workout for same day
+        if day is not None and workout_plan is not None:
             qs = UserWorkoutPlan.objects.filter(
                 user=user,
-                day_of_week=day
+                day_of_week=day,
+                workout_plan=workout_plan
             )
 
             if self.instance:
@@ -105,11 +112,12 @@ class UserWorkoutPlanWriteSerializer(serializers.Serializer):
 
             if qs.exists():
                 raise serializers.ValidationError({
-                    "day_of_week": "You already have a workout for this day"
+                    "workout_plan": (
+                        "This workout already exists for this day."
+                    )
                 })
 
         return data
-
 
 class WorkoutCreateSerializer(ValidateWorkoutExercisesMixin, serializers.Serializer):
     name = serializers.CharField(trim_whitespace=True)
