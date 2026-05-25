@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -51,6 +52,9 @@ INSTALLED_APPS += [
     'apps.bros',
     'common'
 ]
+
+# Enable simplejwt token blacklist app for refresh token rotation
+INSTALLED_APPS += ['rest_framework_simplejwt.token_blacklist']
 
 
 MIDDLEWARE = [
@@ -179,4 +183,13 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API for creating workout plans',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+}
+
+# Simple JWT configuration: access/refresh lifetimes and rotation
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }

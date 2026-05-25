@@ -1,7 +1,7 @@
 # blog/serializers/post_serializer.py
 
 from rest_framework import serializers
-from apps.blog.models import Post
+from apps.blog.models import Post, PostStatus
 from apps.blog.serializers.comment_serializer import CommentSerializer
 
 class PostSerializer(serializers.ModelSerializer):
@@ -24,6 +24,8 @@ class PostSerializer(serializers.ModelSerializer):
         ]
 
 class PostCreateUpdateSerializer(serializers.ModelSerializer):
+    status = serializers.ChoiceField(choices=PostStatus.choices, required=False)
+
     class Meta:
         model = Post
-        fields = ["title", "body", "labels"]
+        fields = ["title", "body", "labels", "status"]

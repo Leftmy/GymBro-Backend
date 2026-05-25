@@ -15,6 +15,8 @@ from apps.blog.services.post_service import (
     delete_post,
 )
 
+from apps.blog.models import PostStatus
+
 from apps.blog.serializers.post_serializer import (
     PostSerializer,
     PostCreateUpdateSerializer,
@@ -60,7 +62,7 @@ class PostAPIView(APIView):
         except ValueError:
             offset = 0
 
-        queryset = list_posts(status=status_param)
+        queryset = list_posts(status=status_param, viewer=request.user)
 
         total = queryset.count()
         posts = queryset[offset:offset + limit]
@@ -86,6 +88,7 @@ class PostAPIView(APIView):
             body=serializer.validated_data["body"],
             author=request.user,
             labels=serializer.validated_data.get("labels"),
+            status=serializer.validated_data.get("status"),
         )
 
         return Response(PostSerializer(post).data, status=status.HTTP_201_CREATED)
@@ -119,6 +122,13 @@ class PostDetailAPIView(APIView):
         if not post:
             return Response({"detail": "Not found"}, status=404)
 
+        # Only the author can update the post and only while it's a draft
+        if post.author != request.user:
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        if post.status != PostStatus.DRAFT:
+            return Response({"detail": "Cannot edit published post"}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = PostCreateUpdateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
@@ -135,6 +145,13 @@ class PostDetailAPIView(APIView):
 
         if not post:
             return Response({"detail": "Not found"}, status=404)
+
+        # Only the author can delete the post and only while it's a draft
+        if post.author != request.user:
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        if post.status != PostStatus.DRAFT:
+            return Response({"detail": "Cannot delete published post"}, status=status.HTTP_403_FORBIDDEN)
 
         delete_post(post)
 

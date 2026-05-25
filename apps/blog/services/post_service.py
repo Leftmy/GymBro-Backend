@@ -1,27 +1,44 @@
 # blog/services/post_service.py
 
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Case, When, IntegerField, Value
 from apps.blog.models import Post, PostStatus
 
 
-def create_post(*, title: str, body: str, author=None, labels=None) -> Post:
+def create_post(*, title: str, body: str, author=None, labels=None, status=None) -> Post:
+    published_at = None
+    if status == PostStatus.PUBLISHED:
+        published_at = timezone.now()
+
     return Post.objects.create(
         title=title,
         body=body,
         author=author,
-        labels=labels or []
+        labels=labels or [],
+        status=status or PostStatus.DRAFT,
+        published_at=published_at,
     )
 
 
-ALLOWED_UPDATE_FIELDS = {"title", "body", "labels"}
+ALLOWED_UPDATE_FIELDS = {"title", "body", "labels", "status"}
 
 def update_post(post: Post, **kwargs) -> Post:
+    # Update allowed fields
     for field, value in kwargs.items():
         if field in ALLOWED_UPDATE_FIELDS:
             setattr(post, field, value)
 
-    post.save(update_fields=list(kwargs.keys()))
+    # Handle published_at when status changes
+    update_fields = set(k for k in kwargs.keys() if k in ALLOWED_UPDATE_FIELDS)
+    if "status" in kwargs:
+        if kwargs.get("status") == PostStatus.PUBLISHED:
+            post.published_at = timezone.now()
+            update_fields.add("published_at")
+        else:
+            post.published_at = None
+            update_fields.add("published_at")
+
+    post.save(update_fields=list(update_fields))
     return post
 
 
@@ -57,14 +74,40 @@ def list_posts(
     *,
     status=None,
     author=None,
+    viewer=None,
 ):
+    """
+    Return posts filtered by status/author.
+
+    - If `status` is None, default to published posts. If `viewer` is provided,
+      include the viewer's drafts as well (they will be ordered above published posts).
+    - If `status` is provided, filter strictly by that status (e.g. 'archived').
+    """
     qs = Post.objects.select_related("author")
 
-    if status:
+    # Default behavior: only published posts, but include viewer's drafts when applicable
+    if status is None:
+        if viewer:
+            qs = qs.filter(Q(status=PostStatus.PUBLISHED) | (Q(status=PostStatus.DRAFT) & Q(author=viewer)))
+        else:
+            qs = qs.filter(status=PostStatus.PUBLISHED)
+    else:
         qs = qs.filter(status=status)
 
     if author:
         qs = qs.filter(author=author)
+
+    # Annotate and order so that the viewer's drafts appear above others
+    if viewer:
+        qs = qs.annotate(
+            _user_draft=Case(
+                When(Q(author=viewer, status=PostStatus.DRAFT), then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        ).order_by("_user_draft", "-created_at")
+    else:
+        qs = qs.order_by("-created_at")
 
     return qs
 
