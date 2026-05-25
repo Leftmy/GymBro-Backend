@@ -44,6 +44,10 @@ MUSCLE_GROUPS = [
         "name": "Abs",
         "svg_id": "abs",
     },
+    {
+        "name": "Cardio",
+        "svg_id": "cardio",
+    },
 ]
 
 class Command(BaseCommand):

@@ -16,6 +16,7 @@ class MuscleCreateSerializer(serializers.Serializer):
 class ExerciseSerializer(serializers.ModelSerializer):
     difficulty = serializers.CharField(source='get_difficulty_display')
     muscles = MuscleGroupSerializer(many=True)
+    description_i18n = serializers.JSONField()
 
     class Meta:
         model = Exercise
@@ -23,6 +24,7 @@ class ExerciseSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'description',
+            'description_i18n',
             'difficulty',
             'muscles',
         ]

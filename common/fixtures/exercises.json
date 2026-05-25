@@ -1,133 +1,214 @@
 [
   {
     "name": "Bench Press",
-    "description": "Classic chest strength exercise.",
+    "description": {
+      "en": "Classic chest strength exercise.",
+      "es": "Ejercicio clásico de fuerza para el pecho.",
+      "uk": "Класична вправа для грудних м'язів."
+    },
     "difficulty": 2,
     "equipment": "barbell",
     "video_url": "",
-    "muscles": [
-      "Chest",
-      "Triceps",
-      "Shoulders"
-    ]
+    "muscles": ["Chest", "Triceps", "Shoulders"]
   },
   {
     "name": "Incline Dumbbell Press",
-    "description": "Upper chest pressing movement.",
+    "description": {"en": "Upper chest pressing movement.", "es": "Movimiento de empuje para la parte superior del pecho.", "uk": "Жим гантелей під кутом для верхньої частини грудей."},
     "difficulty": 2,
     "equipment": "dumbbell",
     "video_url": "",
-    "muscles": [
-      "Chest",
-      "Shoulders",
-      "Triceps"
-    ]
+    "muscles": ["Chest", "Shoulders", "Triceps"]
   },
   {
     "name": "Pull Up",
-    "description": "Bodyweight vertical pulling exercise.",
+    "description": {"en": "Bodyweight vertical pulling exercise.", "es": "Ejercicio de tracción vertical con el propio peso.", "uk": "Вправа вертикального тягнення з власною вагою."},
     "difficulty": 2,
     "equipment": "bodyweight",
     "video_url": "",
-    "muscles": [
-      "Back",
-      "Biceps"
-    ]
+    "muscles": ["Back", "Biceps"]
   },
   {
     "name": "Barbell Row",
-    "description": "Compound back exercise.",
+    "description": {"en": "Compound back exercise.", "es": "Ejercicio compuesto para la espalda.", "uk": "Комплексна вправа для спини."},
     "difficulty": 2,
     "equipment": "barbell",
     "video_url": "",
-    "muscles": [
-      "Back",
-      "Biceps"
-    ]
+    "muscles": ["Back", "Biceps"]
   },
   {
     "name": "Squat",
-    "description": "Compound lower body movement.",
+    "description": {"en": "Compound lower body movement.", "es": "Movimiento compuesto de tren inferior.", "uk": "Комплексна вправа для нижньої частини тіла."},
     "difficulty": 2,
     "equipment": "barbell",
     "video_url": "",
-    "muscles": [
-      "Quadriceps",
-      "Glutes",
-      "Hamstrings"
-    ]
+    "muscles": ["Quadriceps", "Glutes", "Hamstrings"]
   },
   {
     "name": "Romanian Deadlift",
-    "description": "Posterior chain focused hip hinge.",
+    "description": {"en": "Posterior chain focused hip hinge.", "es": "Bisagra de cadera centrada en la cadena posterior.", "uk": "Хіп-хіндж, що фокусується на задній поверхні тіла."},
     "difficulty": 3,
     "equipment": "barbell",
     "video_url": "",
-    "muscles": [
-      "Hamstrings",
-      "Glutes",
-      "Back"
-    ]
+    "muscles": ["Hamstrings", "Glutes", "Back"]
   },
   {
-    "name": "Shoulder Press",
-    "description": "Overhead pressing movement.",
+    "name": "Deadlift",
+    "description": {"en": "Full-body compound lift targeting posterior chain.", "es": "Levantamiento compuesto para toda la cadena posterior.", "uk": "Комплексне підняття для задньої поверхні тіла."},
+    "difficulty": 3,
+    "equipment": "barbell",
+    "video_url": "",
+    "muscles": ["Back", "Hamstrings", "Glutes"]
+  },
+  {
+    "name": "Leg Press",
+    "description": {"en": "Machine-based lower-body pressing movement.", "es": "Ejercicio en máquina para piernas.", "uk": "Жим для ніг на тренажері."},
+    "difficulty": 2,
+    "equipment": "machine",
+    "video_url": "",
+    "muscles": ["Quadriceps", "Glutes", "Hamstrings"]
+  },
+  {
+    "name": "Lunges",
+    "description": {"en": "Unilateral lower-body exercise for balance and strength.", "es": "Ejercicio unilateral para fuerza y equilibrio.", "uk": "Одностороння вправа для ніг і балансу."},
     "difficulty": 2,
     "equipment": "dumbbell",
     "video_url": "",
-    "muscles": [
-      "Shoulders",
-      "Triceps"
-    ]
+    "muscles": ["Quadriceps", "Glutes", "Hamstrings"]
+  },
+  {
+    "name": "Hip Thrust",
+    "description": {"en": "Glute-dominant hip extension exercise.", "es": "Ejercicio de extensión de cadera enfocado en glúteos.", "uk": "Вправа на розгинання стегон для сідниць."},
+    "difficulty": 2,
+    "equipment": "barbell",
+    "video_url": "",
+    "muscles": ["Glutes", "Hamstrings"]
+  },
+  {
+    "name": "Shoulder Press",
+    "description": {"en": "Overhead pressing movement.", "es": "Movimiento de press por encima de la cabeza.", "uk": "Жим над головою."},
+    "difficulty": 2,
+    "equipment": "dumbbell",
+    "video_url": "",
+    "muscles": ["Shoulders", "Triceps"]
   },
   {
     "name": "Lateral Raise",
-    "description": "Shoulder isolation exercise.",
+    "description": {"en": "Shoulder isolation exercise.", "es": "Ejercicio de aislamiento para hombros.", "uk": "Ізолююча вправа для плечей."},
     "difficulty": 1,
     "equipment": "dumbbell",
     "video_url": "",
-    "muscles": [
-      "Shoulders"
-    ]
+    "muscles": ["Shoulders"]
   },
   {
     "name": "Bicep Curl",
-    "description": "Arm isolation exercise.",
+    "description": {"en": "Arm isolation exercise.", "es": "Ejercicio de aislamiento para bíceps.", "uk": "Ізолююча вправа для біцепса."},
     "difficulty": 1,
     "equipment": "dumbbell",
     "video_url": "",
-    "muscles": [
-      "Biceps"
-    ]
+    "muscles": ["Biceps"]
+  },
+  {
+    "name": "EZ Bar Curl",
+    "description": {"en": "Curled barbell variation for biceps.", "es": "Variación con barra EZ para bíceps.", "uk": "Варіант підйому для біцепса зі штангою EZ."},
+    "difficulty": 2,
+    "equipment": "barbell",
+    "video_url": "",
+    "muscles": ["Biceps"]
   },
   {
     "name": "Tricep Pushdown",
-    "description": "Cable tricep isolation exercise.",
+    "description": {"en": "Cable tricep isolation exercise.", "es": "Ejercicio de aislamiento de tríceps con polea.", "uk": "Ізолююча вправа для трицепса з канатною тягою."},
     "difficulty": 1,
     "equipment": "machine",
     "video_url": "",
-    "muscles": [
-      "Triceps"
-    ]
+    "muscles": ["Triceps"]
+  },
+  {
+    "name": "Overhead Triceps Extension",
+    "description": {"en": "Triceps isolation with overhead stretch.", "es": "Extensión de tríceps por encima de la cabeza.", "uk": "Розгинання трицепса над головою."},
+    "difficulty": 2,
+    "equipment": "dumbbell",
+    "video_url": "",
+    "muscles": ["Triceps"]
   },
   {
     "name": "Calf Raise",
-    "description": "Isolation movement for calves.",
+    "description": {"en": "Isolation movement for calves.", "es": "Ejercicio de aislamiento para pantorrillas.", "uk": "Ізолююча вправа для литок."},
     "difficulty": 1,
     "equipment": "bodyweight",
     "video_url": "",
-    "muscles": [
-      "Calves"
-    ]
+    "muscles": ["Calves"]
   },
   {
     "name": "Plank",
-    "description": "Core stabilization exercise.",
+    "description": {"en": "Core stabilization exercise.", "es": "Ejercicio de estabilización del core.", "uk": "Вправа для стабілізації корпусу."},
     "difficulty": 1,
     "equipment": "bodyweight",
     "video_url": "",
-    "muscles": [
-      "Abs"
-    ]
+    "muscles": ["Abs"]
+  },
+  {
+    "name": "Bicycle Crunch",
+    "description": {"en": "Dynamic core exercise targeting the abs.", "es": "Ejercicio dinámico para abdominales.", "uk": "Динамічна вправа для пресу."},
+    "difficulty": 1,
+    "equipment": "bodyweight",
+    "video_url": "",
+    "muscles": ["Abs"]
+  },
+  {
+    "name": "Chest Dip",
+    "description": {"en": "Bodyweight pressing variation for chest.", "es": "Variación de empuje con peso corporal para pecho.", "uk": "Варіант відтискань для грудей з власною вагою."},
+    "difficulty": 2,
+    "equipment": "bodyweight",
+    "video_url": "",
+    "muscles": ["Chest", "Triceps", "Shoulders"]
+  },
+  {
+    "name": "Dumbbell Fly",
+    "description": {"en": "Chest isolation movement.", "es": "Aperturas con mancuernas para el pecho.", "uk": "Розведення гантелей для грудей."},
+    "difficulty": 1,
+    "equipment": "dumbbell",
+    "video_url": "",
+    "muscles": ["Chest"]
+  },
+  {
+    "name": "Rowing Machine",
+    "description": {"en": "Low-impact cardio and full-body pulling on a machine.", "es": "Cardio de bajo impacto y tracción de cuerpo completo en máquina.", "uk": "Кардіо з низьким навантаженням на гребному тренажері."},
+    "difficulty": 2,
+    "equipment": "machine",
+    "video_url": "",
+    "muscles": ["Back", "Cardio"]
+  },
+  {
+    "name": "Running",
+    "description": {"en": "Outdoor or treadmill cardio to build endurance.", "es": "Cardio al aire libre o en cinta para mejorar la resistencia.", "uk": "Кардіо на вулиці або біговій доріжці для витривалості."},
+    "difficulty": 1,
+    "equipment": "bodyweight",
+    "video_url": "",
+    "muscles": ["Cardio"]
+  },
+  {
+    "name": "Cycling",
+    "description": {"en": "Stationary or outdoor cycling for cardiovascular fitness.", "es": "Ciclismo en interior o exterior para fitness cardiovascular.", "uk": "Велоспорт на місці або на відкритому повітрі для кардіофітнесу."},
+    "difficulty": 1,
+    "equipment": "machine",
+    "video_url": "",
+    "muscles": ["Cardio"]
+  },
+  {
+    "name": "Jump Rope",
+    "description": {"en": "High-intensity, low-equipment cardio exercise.", "es": "Cardio de alta intensidad con poca equipación.", "uk": "Високоінтенсивне кардіо зі скакалкою."},
+    "difficulty": 2,
+    "equipment": "bodyweight",
+    "video_url": "",
+    "muscles": ["Cardio"]
+  },
+  {
+    "name": "Burpee",
+    "description": {"en": "Full-body plyometric movement combining a squat and push-up.", "es": "Movimiento pliométrico que combina sentadilla y flexión.", "uk": "Пліометрична вправа, що поєднує присідання та віджимання."},
+    "difficulty": 3,
+    "equipment": "bodyweight",
+    "video_url": "",
+    "muscles": ["Cardio", "Chest", "Shoulders"]
   }
 ]

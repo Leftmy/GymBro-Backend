@@ -21,6 +21,7 @@ class Exercise(BaseModel):
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(unique=True, blank=True)
     description = models.TextField(blank=True)
+    description_i18n = models.JSONField(blank=True, default=dict)
     video_url = models.URLField(blank=True)
     difficulty = models.IntegerField(choices=Difficulty.choices, default=Difficulty.BEGINNER)
     equipment = models.CharField(max_length=20, choices=Equipment.choices, blank=True)
