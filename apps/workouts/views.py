@@ -295,3 +295,28 @@ class UserWorkoutPlanDetailView(APIView):
             return Response({"detail": "Not found"}, status=404)
 
         return Response(UserWorkoutPlanReadSerializer(updated).data)
+
+    @extend_schema(
+        summary="Delete user workout assignment",
+        description="Unassign (delete) a workout assigned to the authenticated user",
+        responses={
+            204: OpenApiResponse(description="Deleted"),
+            404: OpenApiResponse(description="Not found"),
+        },
+    )
+    def delete(self, request, pk):
+        instance = UserWorkoutPlan.objects.filter(
+            pk=pk,
+            user=request.user
+        ).first()
+
+        if not instance:
+            return Response({"detail": "Not found"}, status=404)
+
+        # Use the command to unassign/delete the user workout assignment
+        deleted = WorkoutCommands.unassign_workout_from_user(instance.pk)
+
+        if not deleted:
+            return Response({"detail": "Not found"}, status=404)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
