@@ -1,25 +1,45 @@
-FROM python:3.12-slim 
+FROM python:3.12-slim AS builder
 
-# Install system dependencies (needed for wait-for-it or database checks)
-RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-WORKDIR /apps 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-COPY requirements.txt . 
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy the rest of the code
-COPY . . 
+RUN pip install --no-cache-dir --upgrade pip
 
-# Explicitly set permissions for the entrypoint
-# Adjust the path if your entrypoint is inside a subfolder like docker/django/
-COPY scripts/entrypoint.sh /entrypoint.sh
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+
+FROM python:3.12-slim AS runner
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH"
+
+RUN useradd -u 8888 appuser && chown -R appuser:appuser /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/venv /opt/venv
+
+COPY --chown=appuser:appuser scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 8000 
+COPY --chown=appuser:appuser . .
 
-# The entrypoint script will always run before CMD
+USER appuser
+
+EXPOSE 8000
+
 ENTRYPOINT ["/entrypoint.sh"]
 
-# This is passed as arguments to entrypoint.sh
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
