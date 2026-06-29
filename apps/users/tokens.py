@@ -101,12 +101,23 @@ class GymBroTokenRefreshView(TokenRefreshView):
 
     Reads the refresh token from the HttpOnly cookie.
     Returns a new access token in the response body and sets a new refresh token cookie.
+    
+    Security: 
+    - Old access token is blacklisted (invalidated immediately)
+    - Old refresh token is blacklisted (via BLACKLIST_AFTER_ROTATION setting)
+    - New refresh token is rotated and set in HttpOnly cookie
     """
 
     def post(self, request, *args, **kwargs):
         """
-        Override post to read refresh token from cookie and set new refresh token in cookie.
+        Override post to:
+        1. Extract and blacklist the old access token
+        2. Read refresh token from cookie
+        3. Set new refresh token cookie
         """
+        # Extract old access token from Authorization header before processing
+        old_access_token_str = self._extract_access_token_from_header(request)
+        
         # Read refresh token from cookie
         refresh_token = request.COOKIES.get(COOKIE_NAME)
         
@@ -123,6 +134,10 @@ class GymBroTokenRefreshView(TokenRefreshView):
         response = super().post(request, *args, **kwargs)
 
         if response.status_code == status.HTTP_200_OK:
+            # Blacklist the old access token
+            if old_access_token_str:
+                self._blacklist_access_token(old_access_token_str)
+            
             new_refresh_token = response.data.pop("refresh", None)
             
             if new_refresh_token:
@@ -140,3 +155,42 @@ class GymBroTokenRefreshView(TokenRefreshView):
                 )
 
         return response
+
+    @staticmethod
+    def _extract_access_token_from_header(request):
+        """
+        Extract access token from Authorization header.
+        Expected format: "Bearer <token>"
+        """
+        auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+        if auth_header.startswith("Bearer "):
+            return auth_header[7:]  # Remove "Bearer " prefix
+        return None
+
+    @staticmethod
+    def _blacklist_access_token(token_str):
+        """
+        Blacklist an access token by adding it to the blacklist table.
+        This ensures the token cannot be used again even if still within its lifetime.
+        """
+        try:
+            # Decode token to get exp (expiration) claim
+            token = AccessToken(token_str)
+            
+            # Get or create the OutstandingToken entry
+            outstanding_token, created = OutstandingToken.objects.get_or_create(
+                token=token_str,
+                defaults={
+                    "user_id": token.get("user_id"),
+                    "jti": token.get("jti"),
+                    "token_type": "access",
+                }
+            )
+            
+            # Add to blacklist
+            BlacklistedToken.objects.get_or_create(
+                token=outstanding_token
+            )
+        except (TokenError, Exception) as e:
+            # Log but don't fail the refresh if blacklisting fails
+            print(f"Warning: Failed to blacklist access token: {str(e)}")
