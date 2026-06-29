@@ -191,7 +191,7 @@ class WorkoutsDetailView(APIView):
     
 
 class UserWorkoutPlanView(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="Assign workout plan to user",
@@ -242,7 +242,7 @@ class UserWorkoutPlanView(APIView):
         return Response(UserWorkoutPlanReadSerializer(obj).data, status=201)
     
 class UserWorkoutPlanDetailView(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="Update user workout plan",
@@ -271,10 +271,12 @@ class UserWorkoutPlanDetailView(APIView):
         ],
     )
     def patch(self, request, pk):
-        instance = UserWorkoutPlan.objects.filter(
-            pk=pk,
-            user=request.user
-        ).first()
+        instance = (
+            UserWorkoutPlan.objects
+            .select_related("workout_plan", "user")
+            .filter(pk=pk, user=request.user)
+            .first()
+        )
 
         if not instance:
             return Response({"detail": "Not found"}, status=404)
@@ -305,10 +307,12 @@ class UserWorkoutPlanDetailView(APIView):
         },
     )
     def delete(self, request, pk):
-        instance = UserWorkoutPlan.objects.filter(
-            pk=pk,
-            user=request.user
-        ).first()
+        instance = (
+            UserWorkoutPlan.objects
+            .select_related("workout_plan", "user")
+            .filter(pk=pk, user=request.user)
+            .first()
+        )
 
         if not instance:
             return Response({"detail": "Not found"}, status=404)
