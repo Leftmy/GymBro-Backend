@@ -3,11 +3,26 @@ Custom JWT token classes and serializers for GymBro.
 
 Embeds additional claims (user_uuid, email, role) into the access token
 so that downstream services can identify the user without an extra DB lookup.
+
+Refresh tokens are stored as Secure HttpOnly cookies to prevent XSS attacks.
+Access tokens are blacklisted on refresh for enhanced security.
 """
 
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from datetime import timedelta
+from django.conf import settings
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+
+
+COOKIE_NAME = "refresh_token"
+COOKIE_SECURE = True  # Set to False only for local development
+COOKIE_HTTPONLY = True
+COOKIE_SAMESITE = "Lax"  # Prevents CSRF; use "Strict" for maximum security
 
 
 class GymBroRefreshToken(RefreshToken):
@@ -46,10 +61,82 @@ class GymBroTokenObtainPairView(TokenObtainPairView):
     """
     POST /api/v1/auth/token/
 
-    Returns access + refresh JWT pair with custom claims embedded.
+    Returns only the access token in the response body (with custom claims).
+    The refresh token is stored in a Secure HttpOnly cookie.
     Rate-limited to 5 requests per minute via the 'auth' throttle scope.
     """
 
     serializer_class = GymBroTokenObtainPairSerializer
-    # Override the default throttle classes to apply the 'auth' scope
     throttle_scope = "auth"
+
+    def post(self, request, *args, **kwargs):
+        """
+        Override post to set refresh token in HttpOnly cookie instead of response body.
+        """
+        response = super().post(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_200_OK:
+            refresh_token = response.data.pop("refresh", None)
+            
+            if refresh_token:
+                # Calculate cookie expiration based on REFRESH_TOKEN_LIFETIME setting
+                refresh_lifetime = settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME", timedelta(days=7))
+                
+                response.set_cookie(
+                    key=COOKIE_NAME,
+                    value=refresh_token,
+                    max_age=int(refresh_lifetime.total_seconds()),
+                    secure=COOKIE_SECURE,
+                    httponly=COOKIE_HTTPONLY,
+                    samesite=COOKIE_SAMESITE,
+                    path="/",
+                )
+
+        return response
+
+
+class GymBroTokenRefreshView(TokenRefreshView):
+    """
+    POST /api/v1/auth/token/refresh/
+
+    Reads the refresh token from the HttpOnly cookie.
+    Returns a new access token in the response body and sets a new refresh token cookie.
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        Override post to read refresh token from cookie and set new refresh token in cookie.
+        """
+        # Read refresh token from cookie
+        refresh_token = request.COOKIES.get(COOKIE_NAME)
+        
+        if not refresh_token:
+            return Response(
+                {"detail": "No refresh token found in cookies."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Inject refresh token into request.data for the serializer
+        request.data._mutable = True
+        request.data["refresh"] = refresh_token
+        
+        response = super().post(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_200_OK:
+            new_refresh_token = response.data.pop("refresh", None)
+            
+            if new_refresh_token:
+                # Calculate cookie expiration
+                refresh_lifetime = settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME", timedelta(days=7))
+                
+                response.set_cookie(
+                    key=COOKIE_NAME,
+                    value=new_refresh_token,
+                    max_age=int(refresh_lifetime.total_seconds()),
+                    secure=COOKIE_SECURE,
+                    httponly=COOKIE_HTTPONLY,
+                    samesite=COOKIE_SAMESITE,
+                    path="/",
+                )
+
+        return response

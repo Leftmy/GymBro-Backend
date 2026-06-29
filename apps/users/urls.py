@@ -5,7 +5,7 @@ All routes are included under /api/v1/ via the project-level urls.py.
 Auth endpoints are rate-limited (5/minute) via ScopedRateThrottle.
 
 Auth routes:
-  POST  auth/token/            — obtain access + refresh JWT (custom claims)
+  POST  auth/token/            — obtain access JWT (refresh token in HttpOnly cookie)
   POST  auth/token/refresh/    — rotate refresh token, get new access token
   POST  auth/token/blacklist/  — logout / blacklist refresh token
   POST  auth/register/         — register a new user account
@@ -17,9 +17,8 @@ Profile routes:
 """
 
 from django.urls import path
-from rest_framework_simplejwt.views import TokenRefreshView
 
-from .tokens import GymBroTokenObtainPairView
+from .tokens import GymBroTokenObtainPairView, GymBroTokenRefreshView
 from .views import (
     RegisterView,
     LoginView,
@@ -33,11 +32,11 @@ urlpatterns = [
     # -----------------------------------------------------------------------
     # Authentication
     # -----------------------------------------------------------------------
-    # POST — obtain access + refresh token pair (custom claims: user_uuid, email, role)
+    # POST — obtain access token (refresh token as HttpOnly cookie)
     path("auth/token/", GymBroTokenObtainPairView.as_view(), name="token-obtain"),
 
-    # POST — refresh the access token using a valid refresh token (rotation enabled)
-    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    # POST — refresh the access token using the refresh token from cookie
+    path("auth/token/refresh/", GymBroTokenRefreshView.as_view(), name="token-refresh"),
 
     # POST — blacklist the refresh token (logout)
     path("auth/token/blacklist/", LogoutView.as_view(), name="token-blacklist"),

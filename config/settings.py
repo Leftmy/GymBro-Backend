@@ -231,3 +231,18 @@ X_FRAME_OPTIONS = "DENY"
 
 # Enable the browser's built-in XSS auditor (legacy browsers).
 SECURE_BROWSER_XSS_FILTER = True
+
+# ---------------------------------------------------------------------------
+# Cookie security settings
+# ---------------------------------------------------------------------------
+# Refresh token cookies are Secure (HTTPS only) and HttpOnly (JavaScript-inaccessible)
+# In local development, set these to False if using plain HTTP:
+#   - CSRF_COOKIE_SECURE = False
+#   - SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = "Lax"
+
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"

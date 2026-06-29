@@ -6,6 +6,8 @@ Auth endpoints (register, login, logout, refresh, password-reset) live under
 Profile endpoints (me, search) are protected by JWT IsAuthenticated.
 """
 
+from datetime import timedelta
+from django.conf import settings
 from rest_framework import status
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -24,6 +26,13 @@ from .serializers import (
     PasswordResetRequestSerializer,
 )
 from .services import UserService
+
+
+# Cookie configuration
+REFRESH_COOKIE_NAME = "refresh_token"
+REFRESH_COOKIE_SECURE = True
+REFRESH_COOKIE_HTTPONLY = True
+REFRESH_COOKIE_SAMESITE = "Lax"
 
 
 # ---------------------------------------------------------------------------
@@ -57,6 +66,10 @@ class LoginView(APIView):
     """
     POST /api/v1/auth/token/ — obtain an access + refresh JWT pair.
 
+    RESPONSE:
+    - Body: {"access": "..."} - the access token in JSON
+    - Cookie: refresh_token set as Secure HttpOnly cookie
+
     Custom claims embedded in the access token: user_uuid, email, role.
     Rate-limited to 5 requests/minute per IP.
     """
@@ -67,7 +80,7 @@ class LoginView(APIView):
 
     @extend_schema(
         request=UserLoginSerializer,
-        responses={200: dict},
+        responses={200: {"type": "object", "properties": {"access": {"type": "string"}}}},
     )
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data=request.data)
@@ -78,21 +91,33 @@ class LoginView(APIView):
             password=serializer.validated_data["password"],
         )
 
-        return Response(
-            {
-                "access": auth_data["access"],
-                "refresh": auth_data["refresh"],
-            },
+        response = Response(
+            {"access": auth_data["access"]},
             status=status.HTTP_200_OK,
         )
+
+        # Set refresh token as Secure HttpOnly cookie
+        if auth_data.get("refresh"):
+            refresh_lifetime = settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME", timedelta(days=7))
+            response.set_cookie(
+                key=REFRESH_COOKIE_NAME,
+                value=auth_data["refresh"],
+                max_age=int(refresh_lifetime.total_seconds()),
+                secure=REFRESH_COOKIE_SECURE,
+                httponly=REFRESH_COOKIE_HTTPONLY,
+                samesite=REFRESH_COOKIE_SAMESITE,
+                path="/",
+            )
+
+        return response
 
 
 class LogoutView(APIView):
     """
     POST /api/v1/auth/token/blacklist/ — invalidate (blacklist) the refresh token.
 
-    Requires a valid refresh token in the request body.
-    The corresponding access token will be unusable once the refresh is blacklisted.
+    Reads the refresh token from the HttpOnly cookie and blacklists it.
+    Returns a response with the refresh_token cookie cleared.
     """
 
     permission_classes = [IsAuthenticated]
@@ -100,14 +125,14 @@ class LogoutView(APIView):
     throttle_scope = "auth"
 
     @extend_schema(
-        request={"application/json": {"type": "object", "properties": {"refresh": {"type": "string"}}}},
+        request=None,
         responses={205: None, 400: dict},
     )
     def post(self, request, *args, **kwargs):
-        refresh_token = request.data.get("refresh")
+        refresh_token = request.COOKIES.get(REFRESH_COOKIE_NAME)
         if not refresh_token:
             return Response(
-                {"detail": "Refresh token is required."},
+                {"detail": "No refresh token found in cookies."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         try:
@@ -116,7 +141,13 @@ class LogoutView(APIView):
         except TokenError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(status=status.HTTP_205_RESET_CONTENT)
+        response = Response(status=status.HTTP_205_RESET_CONTENT)
+        # Clear the refresh token cookie
+        response.delete_cookie(
+            key=REFRESH_COOKIE_NAME,
+            path="/",
+        )
+        return response
 
 
 class PasswordResetRequestView(APIView):
