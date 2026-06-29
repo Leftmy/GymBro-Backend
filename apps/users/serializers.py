@@ -44,3 +44,9 @@ class UserUpdateSerializer(serializers.Serializer):
             if password != password_confirm:
                 raise serializers.ValidationError({"password": "Паролі не збігаються."})
         return attrs
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Validates the email supplied when initiating a password reset."""
+
+    email = serializers.EmailField()
