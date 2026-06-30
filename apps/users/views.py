@@ -93,10 +93,7 @@ class LoginView(APIView):
             password=serializer.validated_data["password"],
         )
 
-        response = Response(
-            {"access": auth_data["access"]},
-            status=status.HTTP_200_OK,
-        )
+        response = Response(status=status.HTTP_200_OK)
 
         # Set refresh token as Secure HttpOnly cookie
         if auth_data.get("refresh"):
