@@ -94,7 +94,7 @@ class GymBroTokenObtainPairView(TokenObtainPairView):
                     path="/",
                 )
                 # Also set access token as Secure HttpOnly cookie
-                access_token = response.data.get("access")
+                access_token = response.data.pop("access", None)
                 if access_token:
                     access_lifetime = settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME", timedelta(minutes=15))
                     response.set_cookie(
