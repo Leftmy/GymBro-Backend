@@ -37,9 +37,9 @@ class GymBroRefreshToken(RefreshToken):
     def for_user(cls, user):
         token = super().for_user(user)
         # Embed stable, non-sensitive identifiers into the payload
-        token.access_token["user_uuid"] = str(user.uuid)
-        token.access_token["email"] = user.email
-        token.access_token["role"] = user.role
+        token["user_uuid"] = str(user.uuid)
+        token["email"] = user.email
+        token["role"] = user.role
         return token
 
 
