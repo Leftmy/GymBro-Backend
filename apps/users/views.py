@@ -30,6 +30,8 @@ from .services import UserService
 
 # Cookie configuration
 REFRESH_COOKIE_NAME = "refresh_token"
+# Access token cookie name and shared cookie settings
+ACCESS_COOKIE_NAME = "access_token"
 REFRESH_COOKIE_SECURE = True
 REFRESH_COOKIE_HTTPONLY = True
 REFRESH_COOKIE_SAMESITE = "Lax"
@@ -108,6 +110,17 @@ class LoginView(APIView):
                 samesite=REFRESH_COOKIE_SAMESITE,
                 path="/",
             )
+        # Also set access token as HttpOnly cookie
+        access_lifetime = settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME", timedelta(minutes=15))
+        response.set_cookie(
+            key=ACCESS_COOKIE_NAME,
+            value=auth_data["access"],
+            max_age=int(access_lifetime.total_seconds()),
+            secure=REFRESH_COOKIE_SECURE,
+            httponly=REFRESH_COOKIE_HTTPONLY,
+            samesite=REFRESH_COOKIE_SAMESITE,
+            path="/",
+        )
 
         return response
 
@@ -145,6 +158,11 @@ class LogoutView(APIView):
         # Clear the refresh token cookie
         response.delete_cookie(
             key=REFRESH_COOKIE_NAME,
+            path="/",
+        )
+        # Clear access token cookie as well
+        response.delete_cookie(
+            key=ACCESS_COOKIE_NAME,
             path="/",
         )
         return response

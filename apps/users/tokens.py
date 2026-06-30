@@ -20,6 +20,8 @@ from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, Ou
 
 
 COOKIE_NAME = "refresh_token"
+# Access token cookie name and shared cookie settings
+ACCESS_COOKIE_NAME = "access_token"
 COOKIE_SECURE = True  # Set to False only for local development
 COOKIE_HTTPONLY = True
 COOKIE_SAMESITE = "Lax"  # Prevents CSRF; use "Strict" for maximum security
@@ -91,6 +93,19 @@ class GymBroTokenObtainPairView(TokenObtainPairView):
                     samesite=COOKIE_SAMESITE,
                     path="/",
                 )
+                # Also set access token as Secure HttpOnly cookie
+                access_token = response.data.get("access")
+                if access_token:
+                    access_lifetime = settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME", timedelta(minutes=15))
+                    response.set_cookie(
+                        key=ACCESS_COOKIE_NAME,
+                        value=access_token,
+                        max_age=int(access_lifetime.total_seconds()),
+                        secure=COOKIE_SECURE,
+                        httponly=COOKIE_HTTPONLY,
+                        samesite=COOKIE_SAMESITE,
+                        path="/",
+                    )
 
         return response
 
@@ -153,6 +168,19 @@ class GymBroTokenRefreshView(TokenRefreshView):
                     samesite=COOKIE_SAMESITE,
                     path="/",
                 )
+                # Also set new access token in HttpOnly cookie (if present)
+                access_token = response.data.get("access")
+                if access_token:
+                    access_lifetime = settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME", timedelta(minutes=15))
+                    response.set_cookie(
+                        key=ACCESS_COOKIE_NAME,
+                        value=access_token,
+                        max_age=int(access_lifetime.total_seconds()),
+                        secure=COOKIE_SECURE,
+                        httponly=COOKIE_HTTPONLY,
+                        samesite=COOKIE_SAMESITE,
+                        path="/",
+                    )
 
         return response
 
