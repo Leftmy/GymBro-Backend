@@ -131,7 +131,10 @@ class GymBroTokenRefreshView(TokenRefreshView):
         3. Set new refresh token cookie
         """
         # Extract old access token from Authorization header before processing
-        old_access_token_str = self._extract_access_token_from_header(request)
+        old_access_token_str = (
+            self._extract_access_token_from_header(request)
+            or request.COOKIES.get(ACCESS_COOKIE_NAME)
+        )
         
         # Read refresh token from cookie
         refresh_token = request.COOKIES.get(COOKIE_NAME)
