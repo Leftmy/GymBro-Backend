@@ -8,8 +8,9 @@ Refresh tokens are stored as Secure HttpOnly cookies to prevent XSS attacks.
 Access tokens are blacklisted on refresh for enhanced security.
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
@@ -29,8 +30,9 @@ COOKIE_SAMESITE = "Lax"  # Prevents CSRF; use "Strict" for maximum security
 
 class GymBroRefreshToken(RefreshToken):
     """
-    Custom RefreshToken that injects extra claims into the access token.
-    Used by the service layer when generating tokens manually.
+    Custom RefreshToken that stores only stable user identifiers.
+    Mutable claims like role or email are reconstructed when a new access
+    token is issued during refresh.
     """
 
     @classmethod
@@ -38,8 +40,6 @@ class GymBroRefreshToken(RefreshToken):
         token = super().for_user(user)
         # Embed stable, non-sensitive identifiers into the payload
         token["user_uuid"] = str(user.uuid)
-        token["email"] = user.email
-        token["role"] = user.role
         return token
 
 
@@ -57,6 +57,25 @@ class GymBroTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["email"] = user.email
         token["role"] = user.role
         return token
+
+
+class GymBroTokenRefreshSerializer(TokenRefreshSerializer):
+    token_class = GymBroRefreshToken
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        try:
+            refresh = self.token_class(attrs["refresh"])
+            user = get_user_model().objects.filter(pk=refresh["user_id"]).first()
+            if user is not None:
+                access = refresh.access_token
+                access["user_uuid"] = str(user.uuid)
+                access["email"] = user.email
+                access["role"] = user.role
+                data["access"] = str(access)
+        except Exception:
+            pass
+        return data
 
 
 class GymBroTokenObtainPairView(TokenObtainPairView):
@@ -111,6 +130,7 @@ class GymBroTokenObtainPairView(TokenObtainPairView):
 
 
 class GymBroTokenRefreshView(TokenRefreshView):
+    serializer_class = GymBroTokenRefreshSerializer
     """
     POST /api/v1/auth/token/refresh/
 
@@ -145,11 +165,14 @@ class GymBroTokenRefreshView(TokenRefreshView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        # Inject refresh token into request.data for the serializer
-        request.data._mutable = True
-        request.data["refresh"] = refresh_token
-        
-        response = super().post(request, *args, **kwargs)
+        # Build a fresh payload for the serializer and avoid mutating request.data
+        refresh_payload = {"refresh": refresh_token}
+        serializer = self.get_serializer(data=refresh_payload)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+        response = Response(serializer.validated_data, status=status.HTTP_200_OK)
 
         if response.status_code == status.HTTP_200_OK:
             # Blacklist the old access token
@@ -172,7 +195,7 @@ class GymBroTokenRefreshView(TokenRefreshView):
                     path="/",
                 )
                 # Also set new access token in HttpOnly cookie (if present)
-                access_token = response.data.get("access")
+                access_token = response.data.get("access", None)
                 if access_token:
                     access_lifetime = settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME", timedelta(minutes=15))
                     response.set_cookie(
@@ -205,23 +228,28 @@ class GymBroTokenRefreshView(TokenRefreshView):
         This ensures the token cannot be used again even if still within its lifetime.
         """
         try:
-            # Decode token to get exp (expiration) claim
+            # Decode token to get required claims for outstanding token creation.
             token = AccessToken(token_str)
-            
-            # Get or create the OutstandingToken entry
+
+            expires_at = datetime.fromtimestamp(token["exp"], tz=timezone.utc)
+
+            # Create or fetch the OutstandingToken entry using required fields.
             outstanding_token, created = OutstandingToken.objects.get_or_create(
+                jti=token["jti"],
                 token=token_str,
                 defaults={
                     "user_id": token.get("user_id"),
-                    "jti": token.get("jti"),
-                    "token_type": "access",
-                }
+                    "expires_at": expires_at,
+                },
             )
-            
-            # Add to blacklist
-            BlacklistedToken.objects.get_or_create(
-                token=outstanding_token
-            )
-        except (TokenError, Exception) as e:
-            # Log but don't fail the refresh if blacklisting fails
+
+            # Blacklist the outstanding token.
+            # This row is enforced by SimpleJWT only when the token blacklist
+            # backend is enabled and JWTAuthentication checks token revocation.
+            BlacklistedToken.objects.get_or_create(token=outstanding_token)
+        except TokenError as e:
+            # Log but don't fail the refresh if blacklisting fails.
             print(f"Warning: Failed to blacklist access token: {str(e)}")
+        except Exception as e:
+            # Unexpected failures in blacklist bookkeeping should not break refresh.
+            print(f"Warning: Failed to record access token blacklist entry: {str(e)}")

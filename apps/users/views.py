@@ -8,6 +8,7 @@ Profile endpoints (me, search) are protected by JWT IsAuthenticated.
 
 from datetime import timedelta
 from django.conf import settings
+from django.contrib.auth.forms import PasswordResetForm
 from rest_framework import status
 from rest_framework.views import APIView, Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -186,10 +187,16 @@ class PasswordResetRequestView(APIView):
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # NOTE: actual email dispatch is wired up in the notifications app (Issue #12).
-        # Here we intentionally return 200 even if the email is unknown to avoid
-        # leaking registered addresses (user-enumeration protection).
+        reset_form = PasswordResetForm(data=serializer.validated_data)
+        if reset_form.is_valid():
+            reset_form.save(
+                request=request,
+                use_https=request.is_secure(),
+                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+            )
 
+        # Preserve user-enumeration protection by returning 200 regardless of whether
+        # the email belongs to a registered user.
         return Response(
             {"detail": "If this email is registered, a reset link has been sent."},
             status=status.HTTP_200_OK,
