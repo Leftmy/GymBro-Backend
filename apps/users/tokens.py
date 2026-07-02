@@ -145,11 +145,14 @@ class GymBroTokenRefreshView(TokenRefreshView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        # Inject refresh token into request.data for the serializer
-        request.data._mutable = True
-        request.data["refresh"] = refresh_token
-        
-        response = super().post(request, *args, **kwargs)
+        # Build a fresh payload for the serializer and avoid mutating request.data
+        refresh_payload = {"refresh": refresh_token}
+        serializer = self.get_serializer(data=refresh_payload)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+        response = Response(serializer.validated_data, status=status.HTTP_200_OK)
 
         if response.status_code == status.HTTP_200_OK:
             # Blacklist the old access token
@@ -172,7 +175,7 @@ class GymBroTokenRefreshView(TokenRefreshView):
                     path="/",
                 )
                 # Also set new access token in HttpOnly cookie (if present)
-                access_token = response.data.get("access")
+                access_token = response.data.get("access", None)
                 if access_token:
                     access_lifetime = settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME", timedelta(minutes=15))
                     response.set_cookie(
