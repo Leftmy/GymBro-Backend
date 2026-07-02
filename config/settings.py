@@ -175,6 +175,21 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.CursorPagination",
     "PAGE_SIZE": 10,
+    # API versioning via URL path (e.g. /api/v1/...)
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'DEFAULT_VERSION': 'v1',
+    'ALLOWED_VERSIONS': ['v1'],
+    'VERSION_PARAM': 'version',
+    # Throttling: limit auth endpoints to 5 requests/minute per IP
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day',
+        'auth': '5/minute',
+    },
 }
 
 # Configure Spectacular settings
@@ -204,3 +219,30 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://127.0.0.1",
 ]
+
+# ---------------------------------------------------------------------------
+# Security hardening headers
+# ---------------------------------------------------------------------------
+# Prevent browsers from MIME-sniffing a response away from the declared type.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Instruct browsers to deny framing entirely (clickjacking protection).
+X_FRAME_OPTIONS = "DENY"
+
+# Enable the browser's built-in XSS auditor (legacy browsers).
+SECURE_BROWSER_XSS_FILTER = True
+
+# ---------------------------------------------------------------------------
+# Cookie security settings
+# ---------------------------------------------------------------------------
+# Refresh token cookies are Secure (HTTPS only) and HttpOnly (JavaScript-inaccessible)
+# In local development, set these to False if using plain HTTP:
+#   - CSRF_COOKIE_SECURE = False
+#   - SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = "Lax"
+
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"

@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
 from .models import User, UserRole
+from .tokens import GymBroRefreshToken
 from django.db import transaction
 
 class UserService:
@@ -98,7 +98,8 @@ class UserService:
         if not user.is_active:
             raise AuthenticationFailed("User's unactive")
 
-        refresh = RefreshToken.for_user(user)
+        # Use custom token so that access payload carries user_uuid, email, role
+        refresh = GymBroRefreshToken.for_user(user)
         return {
             "user": user,
             "access": str(refresh.access_token),
