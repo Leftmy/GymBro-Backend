@@ -1,8 +1,9 @@
-from django.core.management.base import BaseCommand
+import random
+
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
 from django.db import transaction
 from faker import Faker
-import random
 
 User = get_user_model()
 fake = Faker()
@@ -52,9 +53,4 @@ class Command(BaseCommand):
                 role="admin",
             )
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Successfully created {count} users"
-            )
-        )
-        
+        self.stdout.write(self.style.SUCCESS(f"Successfully created {count} users"))

@@ -7,27 +7,25 @@ Profile endpoints (me, search) are protected by JWT IsAuthenticated.
 """
 
 from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
-from rest_framework.views import APIView, Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.throttling import ScopedRateThrottle
-
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.views import APIView, Response
 from rest_framework_simplejwt.exceptions import TokenError
-
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import (
-    UserUpdateSerializer,
-    UserRegisterSerializer,
-    UserLoginSerializer,
-    UserSerializer,
     PasswordResetRequestSerializer,
+    UserLoginSerializer,
+    UserRegisterSerializer,
+    UserSerializer,
+    UserUpdateSerializer,
 )
 from .services import UserService
-
 
 # Cookie configuration
 REFRESH_COOKIE_NAME = "refresh_token"
@@ -41,6 +39,7 @@ REFRESH_COOKIE_SAMESITE = "Lax"
 # ---------------------------------------------------------------------------
 # Auth: throttle scope applied to all auth endpoints
 # ---------------------------------------------------------------------------
+
 
 class RegisterView(APIView):
     """POST /api/v1/auth/register/ — create a new user account."""
@@ -83,7 +82,9 @@ class LoginView(APIView):
 
     @extend_schema(
         request=UserLoginSerializer,
-        responses={200: {"type": "object", "properties": {"access": {"type": "string"}}}},
+        responses={
+            200: {"type": "object", "properties": {"access": {"type": "string"}}}
+        },
     )
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data=request.data)
@@ -98,7 +99,9 @@ class LoginView(APIView):
 
         # Set refresh token as Secure HttpOnly cookie
         if auth_data.get("refresh"):
-            refresh_lifetime = settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME", timedelta(days=7))
+            refresh_lifetime = settings.SIMPLE_JWT.get(
+                "REFRESH_TOKEN_LIFETIME", timedelta(days=7)
+            )
             response.set_cookie(
                 key=REFRESH_COOKIE_NAME,
                 value=auth_data["refresh"],
@@ -109,7 +112,9 @@ class LoginView(APIView):
                 path="/",
             )
         # Also set access token as HttpOnly cookie
-        access_lifetime = settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME", timedelta(minutes=15))
+        access_lifetime = settings.SIMPLE_JWT.get(
+            "ACCESS_TOKEN_LIFETIME", timedelta(minutes=15)
+        )
         response.set_cookie(
             key=ACCESS_COOKIE_NAME,
             value=auth_data["access"],
@@ -207,6 +212,7 @@ class PasswordResetRequestView(APIView):
 # Profile endpoints (require authentication)
 # ---------------------------------------------------------------------------
 
+
 class UserSearchAPIView(APIView):
     """GET /api/v1/users/search/?search=<query> — full-text user search."""
 
@@ -253,11 +259,15 @@ class UserSearchAPIView(APIView):
             offset = 0
 
         users = UserService.search_users(query=query, limit=limit, offset=offset)
-        return Response(UserSerializer(users, many=True).data, status=status.HTTP_200_OK)
+        return Response(
+            UserSerializer(users, many=True).data, status=status.HTTP_200_OK
+        )
 
 
 class UserView(APIView):
-    """GET / PATCH / DELETE /api/v1/users/me/ — manage the authenticated user's profile."""
+    """
+    GET / PATCH / DELETE /api/v1/users/me/ — manage the authenticated user's profile.
+    """
 
     permission_classes = [IsAuthenticated]
 

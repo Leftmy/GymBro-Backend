@@ -1,5 +1,5 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 
 User = settings.AUTH_USER_MODEL
 
@@ -39,11 +39,8 @@ class Bro(models.Model):
                 fields=["sender", "receiver"],
                 name="unique_bro_relation",
             ),
-
             models.CheckConstraint(
-                condition=~models.Q(
-                    sender=models.F("receiver")
-                ),
+                condition=~models.Q(sender=models.F("receiver")),
                 name="prevent_self_bro",
             ),
         ]

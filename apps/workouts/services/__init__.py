@@ -1,24 +1,24 @@
 from .commands import WorkoutCommands
-from .queries import WorkoutQueries
-from .exceptions import (
-    WorkoutException,
-    WorkoutNotFoundError,
-    WorkoutAlreadyExistsError,
-    InvalidExercisesError,
-    ExerciseNotFoundError,
-    UserWorkoutPlanNotFoundError,
-    InvalidDayError,
-)
 from .dtos import (
-    ExerciseDTO,
-    CreateWorkoutCommand,
-    UpdateWorkoutCommand,
     AssignWorkoutCommand,
+    CreateWorkoutCommand,
+    ExerciseDTO,
     UpdateUserWorkoutPlanCommand,
-    WorkoutPlanDTO,
+    UpdateWorkoutCommand,
     UserWorkoutPlanDTO,
     WorkoutFilterQuery,
+    WorkoutPlanDTO,
 )
+from .exceptions import (
+    ExerciseNotFoundError,
+    InvalidDayError,
+    InvalidExercisesError,
+    UserWorkoutPlanNotFoundError,
+    WorkoutAlreadyExistsError,
+    WorkoutException,
+    WorkoutNotFoundError,
+)
+from .queries import WorkoutQueries
 
 __all__ = [
     "WorkoutCommands",

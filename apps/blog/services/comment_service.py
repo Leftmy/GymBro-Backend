@@ -4,11 +4,7 @@ from apps.blog.models import Comment, Post
 
 
 def create_comment(*, post: Post, user=None, body: str) -> Comment:
-    return Comment.objects.create(
-        post=post,
-        user=user,
-        body=body
-    )
+    return Comment.objects.create(post=post, user=user, body=body)
 
 
 def delete_comment(comment: Comment) -> None:

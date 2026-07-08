@@ -1,11 +1,9 @@
 # apps/users/models.py
 
-from django.contrib.auth.models import AbstractUser
-from django.db import models
 from common.core.models import BaseModel
-
+from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.indexes import GinIndex
-from django.contrib.postgres.search import SearchVectorField
+from django.db import models
 
 
 class UserRole(models.TextChoices):
@@ -39,7 +37,6 @@ class User(AbstractUser, BaseModel):
         indexes = [
             models.Index(fields=["email"]),
             models.Index(fields=["username_normalized"]),
-
             GinIndex(
                 fields=["username_normalized"],
                 name="user_username_norm_trgm",

@@ -23,31 +23,19 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         fixture_path = (
-            Path(__file__)
-            .resolve()
-            .parents[2]
-            / "fixtures"
-            / "workout_plans.json"
+            Path(__file__).resolve().parents[2] / "fixtures" / "workout_plans.json"
         )
 
         if not fixture_path.exists():
-            self.stdout.write(
-                self.style.ERROR(
-                    f"Fixture not found: {fixture_path}"
-                )
-            )
+            self.stdout.write(self.style.ERROR(f"Fixture not found: {fixture_path}"))
             return
 
         if options["flush"]:
             WorkoutPlan.objects.all().delete()
 
-            self.stdout.write(
-                self.style.WARNING(
-                    "Existing workout plans deleted."
-                )
-            )
+            self.stdout.write(self.style.WARNING("Existing workout plans deleted."))
 
-        with open(fixture_path, "r", encoding="utf-8") as file:
+        with open(fixture_path, encoding="utf-8") as file:
             plans = json.load(file)
 
         created_count = 0
@@ -59,16 +47,10 @@ class Command(BaseCommand):
 
             if username:
                 try:
-                    created_by = User.objects.get(
-                        username=username
-                    )
+                    created_by = User.objects.get(username=username)
 
                 except User.DoesNotExist:
-                    self.stdout.write(
-                        self.style.ERROR(
-                            f"User not found: {username}"
-                        )
-                    )
+                    self.stdout.write(self.style.ERROR(f"User not found: {username}"))
                     continue
 
             workout_plan, created = WorkoutPlan.objects.get_or_create(
@@ -90,22 +72,15 @@ class Command(BaseCommand):
                 created_count += 1
 
                 self.stdout.write(
-                    self.style.SUCCESS(
-                        f"Created workout plan: "
-                        f"{workout_plan.name}"
-                    )
+                    self.style.SUCCESS(f"Created workout plan: {workout_plan.name}")
                 )
             else:
                 self.stdout.write(
                     self.style.WARNING(
-                        f"Workout plan already exists: "
-                        f"{workout_plan.name}"
+                        f"Workout plan already exists: {workout_plan.name}"
                     )
                 )
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"\nDone. Created "
-                f"{created_count} workout plans."
-            )
+            self.style.SUCCESS(f"\nDone. Created {created_count} workout plans.")
         )

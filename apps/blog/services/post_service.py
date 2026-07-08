@@ -1,11 +1,14 @@
 # blog/services/post_service.py
 
+from django.db.models import Case, IntegerField, Q, Value, When
 from django.utils import timezone
-from django.db.models import Q, Case, When, IntegerField, Value
+
 from apps.blog.models import Post, PostStatus
 
 
-def create_post(*, title: str, body: str, author=None, labels=None, status=None) -> Post:
+def create_post(
+    *, title: str, body: str, author=None, labels=None, status=None
+) -> Post:
     published_at = None
     if status == PostStatus.PUBLISHED:
         published_at = timezone.now()
@@ -21,6 +24,7 @@ def create_post(*, title: str, body: str, author=None, labels=None, status=None)
 
 
 ALLOWED_UPDATE_FIELDS = {"title", "body", "labels", "status"}
+
 
 def update_post(post: Post, **kwargs) -> Post:
     # Update allowed fields
@@ -85,10 +89,14 @@ def list_posts(
     """
     qs = Post.objects.select_related("author")
 
-    # Default behavior: only published posts, but include viewer's drafts when applicable
+    # Default behavior: only published posts,
+    # but include viewer's drafts when applicable
     if status is None:
         if viewer:
-            qs = qs.filter(Q(status=PostStatus.PUBLISHED) | (Q(status=PostStatus.DRAFT) & Q(author=viewer)))
+            qs = qs.filter(
+                Q(status=PostStatus.PUBLISHED)
+                | (Q(status=PostStatus.DRAFT) & Q(author=viewer))
+            )
         else:
             qs = qs.filter(status=PostStatus.PUBLISHED)
     else:
@@ -112,9 +120,5 @@ def list_posts(
     return qs
 
 
-
 def search_posts(query: str):
-    return Post.objects.filter(
-        Q(title__icontains=query) |
-        Q(body__icontains=query)
-    )
+    return Post.objects.filter(Q(title__icontains=query) | Q(body__icontains=query))

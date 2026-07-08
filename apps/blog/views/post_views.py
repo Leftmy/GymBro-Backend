@@ -1,25 +1,22 @@
 # blog/api/post_api.py
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from drf_spectacular.utils import OpenApiParameter, extend_schema
-
+from apps.blog.models import PostStatus
+from apps.blog.serializers.post_serializer import (
+    PostCreateUpdateSerializer,
+    PostSerializer,
+)
 from apps.blog.services.post_service import (
     create_post,
+    delete_post,
     get_post_by_id,
     list_posts,
     update_post,
-    delete_post,
-)
-
-from apps.blog.models import PostStatus
-
-from apps.blog.serializers.post_serializer import (
-    PostSerializer,
-    PostCreateUpdateSerializer,
 )
 
 
@@ -27,28 +24,27 @@ class PostAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-    summary="Get posts",
-    parameters=[
-        OpenApiParameter(
-            name="status",
-            type=str,
-            required=False,
-        ),
-        OpenApiParameter(
-            name="limit",
-            type=int,
-            required=False,
-        ),
-        OpenApiParameter(
-            name="offset",
-            type=int,
-            required=False,
-        ),
-    ],
-    responses=PostSerializer(many=True),
-)
+        summary="Get posts",
+        parameters=[
+            OpenApiParameter(
+                name="status",
+                type=str,
+                required=False,
+            ),
+            OpenApiParameter(
+                name="limit",
+                type=int,
+                required=False,
+            ),
+            OpenApiParameter(
+                name="offset",
+                type=int,
+                required=False,
+            ),
+        ],
+        responses=PostSerializer(many=True),
+    )
     def get(self, request):
-
         # query params
         status_param = request.query_params.get("status")
 
@@ -65,14 +61,16 @@ class PostAPIView(APIView):
         queryset = list_posts(status=status_param, viewer=request.user)
 
         total = queryset.count()
-        posts = queryset[offset:offset + limit]
+        posts = queryset[offset : offset + limit]
 
         serializer = PostSerializer(posts, many=True)
 
-        return Response({
-            "total": total,
-            "results": serializer.data,
-        })
+        return Response(
+            {
+                "total": total,
+                "results": serializer.data,
+            }
+        )
 
     @extend_schema(
         summary="Create post",
@@ -92,7 +90,8 @@ class PostAPIView(APIView):
         )
 
         return Response(PostSerializer(post).data, status=status.HTTP_201_CREATED)
-    
+
+
 class PostDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -127,7 +126,10 @@ class PostDetailAPIView(APIView):
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
         if post.status != PostStatus.DRAFT:
-            return Response({"detail": "Cannot edit published post"}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "Cannot edit published post"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         serializer = PostCreateUpdateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -151,9 +153,11 @@ class PostDetailAPIView(APIView):
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
         if post.status != PostStatus.DRAFT:
-            return Response({"detail": "Cannot delete published post"}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "Cannot delete published post"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         delete_post(post)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-    

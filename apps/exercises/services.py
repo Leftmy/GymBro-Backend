@@ -1,8 +1,9 @@
-from typing import Optional
 from django.db import transaction
+
 from apps.exercises.models.exercise import Exercise
-from apps.exercises.models.muscle_group import MuscleGroup
 from apps.exercises.models.exercise_muscle_group import ExerciseMuscle
+from apps.exercises.models.muscle_group import MuscleGroup
+
 
 class MuscleService:
     @staticmethod
@@ -10,16 +11,16 @@ class MuscleService:
         return MuscleGroup.objects.all()
 
     @staticmethod
-    def get_muscle_by_id(muscle_id: int) -> Optional[MuscleGroup]:
+    def get_muscle_by_id(muscle_id: int) -> MuscleGroup | None:
         return MuscleGroup.objects.filter(id=muscle_id).first()
 
     @staticmethod
-    def get_muscles_by_name(name: str) -> Optional[MuscleGroup]:
+    def get_muscles_by_name(name: str) -> MuscleGroup | None:
         return MuscleGroup.objects.filter(name=name).first()
 
     @staticmethod
     def create_muscle(**data):
-        if MuscleGroup.objects.filter(name=data.get('name')).exists():
+        if MuscleGroup.objects.filter(name=data.get("name")).exists():
             return None
         return MuscleGroup.objects.create(**data)
 
@@ -28,12 +29,12 @@ class MuscleService:
         muscle = MuscleService.get_muscle_by_id(muscle_id)
         if not muscle:
             return None
-        
+
         for attr, value in data.items():
             setattr(muscle, attr, value)
         muscle.save()
         return muscle
-    
+
     @staticmethod
     def delete_muscle(muscle_id: int) -> bool:
         muscle = MuscleService.get_muscle_by_id(muscle_id)
@@ -41,15 +42,16 @@ class MuscleService:
             muscle.delete()
             return True
         return False
-    
+
+
 class ExerciseService:
     @staticmethod
     def get_all_exercises(
-    *,
-    muscle_slug: str = None,
-    # only_primary: bool = None,
-    difficulty: int = None,
-    equipment: str = None
+        *,
+        muscle_slug: str = None,
+        # only_primary: bool = None,
+        difficulty: int = None,
+        equipment: str = None,
     ):
         qs = Exercise.objects.prefetch_related("muscles").all()
 
@@ -67,24 +69,30 @@ class ExerciseService:
             qs = qs.filter(equipment=equipment)
 
         return qs.distinct()
-    
+
     @staticmethod
     def get_exercise_by_id(exercise_id: int):
-        return Exercise.objects.prefetch_related("muscles").filter(id=exercise_id).first()
-        
+        return (
+            Exercise.objects.prefetch_related("muscles").filter(id=exercise_id).first()
+        )
+
     @staticmethod
     def get_exercise_by_name(exercise_name: str):
-        return Exercise.objects.prefetch_related("muscles").filter(name=exercise_name).first()
-    
+        return (
+            Exercise.objects.prefetch_related("muscles")
+            .filter(name=exercise_name)
+            .first()
+        )
+
     @staticmethod
-    def create_exercise(*, name, description="", difficulty=1, equipment="", video_url="", muscles_map):
+    def create_exercise(
+        *, name, description="", difficulty=1, equipment="", video_url="", muscles_map
+    ):
         from django.db import IntegrityError
 
         slugs = [m["slug"] for m in muscles_map]
 
-        muscle_map = {
-            m.slug: m for m in MuscleGroup.objects.filter(slug__in=slugs)
-        }
+        muscle_map = {m.slug: m for m in MuscleGroup.objects.filter(slug__in=slugs)}
 
         with transaction.atomic():
             try:
@@ -160,7 +168,6 @@ class ExerciseService:
                 ExerciseMuscle.objects.bulk_create(links)
 
             return exercise
-        
 
     @staticmethod
     def delete_exercise(exercise_id: int):
@@ -168,9 +175,6 @@ class ExerciseService:
 
         if not exercise:
             return False
-        
+
         exercise.delete()
         return True
-
-
-    

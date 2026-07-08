@@ -1,8 +1,9 @@
 # blog/serializers/post_serializer.py
 
 from rest_framework import serializers
+
 from apps.blog.models import Post, PostStatus
-from apps.blog.serializers.comment_serializer import CommentSerializer
+
 
 class PostSerializer(serializers.ModelSerializer):
     comments_count = serializers.IntegerField(source="comments.count", read_only=True)
@@ -22,6 +23,7 @@ class PostSerializer(serializers.ModelSerializer):
             "published_at",
             "comments_count",
         ]
+
 
 class PostCreateUpdateSerializer(serializers.ModelSerializer):
     status = serializers.ChoiceField(choices=PostStatus.choices, required=False)

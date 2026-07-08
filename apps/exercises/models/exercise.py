@@ -1,10 +1,10 @@
 # apps/exercises/models.py
-from django.db import IntegrityError, models
-from django.utils.text import slugify
 import uuid
 
-from django.db import transaction
 from common.core.models import BaseModel
+from django.db import IntegrityError, models, transaction
+from django.utils.text import slugify
+
 
 class Exercise(BaseModel):
     class Difficulty(models.IntegerChoices):
@@ -23,13 +23,13 @@ class Exercise(BaseModel):
     description = models.TextField(blank=True)
     description_i18n = models.JSONField(blank=True, default=dict)
     video_url = models.URLField(blank=True)
-    difficulty = models.IntegerField(choices=Difficulty.choices, default=Difficulty.BEGINNER)
+    difficulty = models.IntegerField(
+        choices=Difficulty.choices, default=Difficulty.BEGINNER
+    )
     equipment = models.CharField(max_length=20, choices=Equipment.choices, blank=True)
 
     muscles = models.ManyToManyField(
-        "MuscleGroup",
-        through="ExerciseMuscle",
-        related_name="exercises"
+        "MuscleGroup", through="ExerciseMuscle", related_name="exercises"
     )
 
     def save(self, *args, **kwargs):

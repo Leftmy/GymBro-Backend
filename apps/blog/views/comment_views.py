@@ -1,24 +1,23 @@
 # blog/api/post_api.py
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from common.core.base_cursor_pagination import BaseCursorPagination
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from drf_spectacular.utils import OpenApiResponse
-from drf_spectacular.utils import extend_schema
-
-from apps.blog.serializers.comment_serializer import CommentCreateSerializer, CommentSerializer
+from apps.blog.serializers.comment_serializer import (
+    CommentCreateSerializer,
+    CommentSerializer,
+)
 from apps.blog.services.comment_service import (
     create_comment,
     delete_comment,
     get_comment_by_id,
     get_comments_for_post,
 )
-
 from apps.blog.services.post_service import get_post_by_id
-from common.core.base_cursor_pagination import BaseCursorPagination
-
 
 
 class CommentCreateAPIView(APIView):
@@ -27,7 +26,7 @@ class CommentCreateAPIView(APIView):
     @extend_schema(
         summary="Create comment",
         request=CommentCreateSerializer,
-        responses=CommentSerializer
+        responses=CommentSerializer,
     )
     def post(self, request):
         serializer = CommentCreateSerializer(data=request.data)
@@ -40,7 +39,8 @@ class CommentCreateAPIView(APIView):
         )
 
         return Response(CommentSerializer(comment).data, status=201)
-    
+
+
 class CommentDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -55,15 +55,13 @@ class CommentDeleteAPIView(APIView):
             return Response({"detail": "Not found"}, status=404)
 
         if comment.user != request.user:
-            return Response(
-                {"detail": "Forbidden"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
 
         delete_comment(comment)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
+
 class CommentListByPostAPIView(APIView):
     @extend_schema(
         summary="Get comments for post",

@@ -8,17 +8,23 @@ Refresh tokens are stored as Secure HttpOnly cookies to prevent XSS attacks.
 Access tokens are blacklisted on refresh for enhanced security.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
-
+from rest_framework_simplejwt.serializers import (
+    TokenObtainPairSerializer,
+    TokenRefreshSerializer,
+)
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 COOKIE_NAME = "refresh_token"
 # Access token cookie name and shared cookie settings
@@ -98,11 +104,13 @@ class GymBroTokenObtainPairView(TokenObtainPairView):
 
         if response.status_code == status.HTTP_200_OK:
             refresh_token = response.data.pop("refresh", None)
-            
+
             if refresh_token:
                 # Calculate cookie expiration based on REFRESH_TOKEN_LIFETIME setting
-                refresh_lifetime = settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME", timedelta(days=7))
-                
+                refresh_lifetime = settings.SIMPLE_JWT.get(
+                    "REFRESH_TOKEN_LIFETIME", timedelta(days=7)
+                )
+
                 response.set_cookie(
                     key=COOKIE_NAME,
                     value=refresh_token,
@@ -115,7 +123,9 @@ class GymBroTokenObtainPairView(TokenObtainPairView):
                 # Also set access token as Secure HttpOnly cookie
                 access_token = response.data.pop("access", None)
                 if access_token:
-                    access_lifetime = settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME", timedelta(minutes=15))
+                    access_lifetime = settings.SIMPLE_JWT.get(
+                        "ACCESS_TOKEN_LIFETIME", timedelta(minutes=15)
+                    )
                     response.set_cookie(
                         key=ACCESS_COOKIE_NAME,
                         value=access_token,
@@ -136,8 +146,8 @@ class GymBroTokenRefreshView(TokenRefreshView):
 
     Reads the refresh token from the HttpOnly cookie.
     Returns a new access token in the response body and sets a new refresh token cookie.
-    
-    Security: 
+
+    Security:
     - Old access token is blacklisted (invalidated immediately)
     - Old refresh token is blacklisted (via BLACKLIST_AFTER_ROTATION setting)
     - New refresh token is rotated and set in HttpOnly cookie
@@ -151,14 +161,13 @@ class GymBroTokenRefreshView(TokenRefreshView):
         3. Set new refresh token cookie
         """
         # Extract old access token from Authorization header before processing
-        old_access_token_str = (
-            self._extract_access_token_from_header(request)
-            or request.COOKIES.get(ACCESS_COOKIE_NAME)
-        )
-        
+        old_access_token_str = self._extract_access_token_from_header(
+            request
+        ) or request.COOKIES.get(ACCESS_COOKIE_NAME)
+
         # Read refresh token from cookie
         refresh_token = request.COOKIES.get(COOKIE_NAME)
-        
+
         if not refresh_token:
             return Response(
                 {"detail": "No refresh token found in cookies."},
@@ -178,13 +187,15 @@ class GymBroTokenRefreshView(TokenRefreshView):
             # Blacklist the old access token
             if old_access_token_str:
                 self._blacklist_access_token(old_access_token_str)
-            
+
             new_refresh_token = response.data.pop("refresh", None)
-            
+
             if new_refresh_token:
                 # Calculate cookie expiration
-                refresh_lifetime = settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME", timedelta(days=7))
-                
+                refresh_lifetime = settings.SIMPLE_JWT.get(
+                    "REFRESH_TOKEN_LIFETIME", timedelta(days=7)
+                )
+
                 response.set_cookie(
                     key=COOKIE_NAME,
                     value=new_refresh_token,
@@ -197,7 +208,9 @@ class GymBroTokenRefreshView(TokenRefreshView):
                 # Also set new access token in HttpOnly cookie (if present)
                 access_token = response.data.get("access", None)
                 if access_token:
-                    access_lifetime = settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME", timedelta(minutes=15))
+                    access_lifetime = settings.SIMPLE_JWT.get(
+                        "ACCESS_TOKEN_LIFETIME", timedelta(minutes=15)
+                    )
                     response.set_cookie(
                         key=ACCESS_COOKIE_NAME,
                         value=access_token,
@@ -231,7 +244,7 @@ class GymBroTokenRefreshView(TokenRefreshView):
             # Decode token to get required claims for outstanding token creation.
             token = AccessToken(token_str)
 
-            expires_at = datetime.fromtimestamp(token["exp"], tz=timezone.utc)
+            expires_at = datetime.fromtimestamp(token["exp"], tz=UTC)
 
             # Create or fetch the OutstandingToken entry using required fields.
             outstanding_token, created = OutstandingToken.objects.get_or_create(

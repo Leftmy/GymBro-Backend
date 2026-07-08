@@ -20,7 +20,7 @@ class Post(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="posts"
+        related_name="posts",
     )
 
     status = models.CharField(
@@ -44,19 +44,18 @@ class Post(models.Model):
             models.Index(fields=["status", "-created_at"]),
         ]
 
+
 class Comment(models.Model):
     post = models.ForeignKey(
-        "blog.Post",
-        on_delete=models.CASCADE,
-        related_name="comments"
+        "blog.Post", on_delete=models.CASCADE, related_name="comments"
     )
 
     user = models.ForeignKey(
         "users.User",
-        on_delete=models.SET_NULL, 
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="comments"
+        related_name="comments",
     )
 
     body = models.TextField()
@@ -65,7 +64,7 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"Comment({self.user_id}, {self.post_id})"
-    
+
     class Meta:
         verbose_name = "Comment"
         verbose_name_plural = "Comments"

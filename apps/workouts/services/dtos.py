@@ -1,6 +1,5 @@
 """Data Transfer Objects for workout service commands and queries."""
 
-from typing import Optional, List
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -24,7 +23,7 @@ class CreateWorkoutCommand:
     created_by_id: int
     description: str = ""
     is_public: bool = False
-    exercises: List[ExerciseDTO] = field(default_factory=list)
+    exercises: list[ExerciseDTO] = field(default_factory=list)
 
     def validate(self) -> None:
         """Validate command data."""
@@ -49,10 +48,10 @@ class UpdateWorkoutCommand:
     """Command DTO for updating a workout."""
 
     workout_id: int
-    name: Optional[str] = None
-    description: Optional[str] = None
-    is_public: Optional[bool] = None
-    exercises: Optional[List[ExerciseDTO]] = None
+    name: str | None = None
+    description: str | None = None
+    is_public: bool | None = None
+    exercises: list[ExerciseDTO] | None = None
 
     def validate(self) -> None:
         """Validate command data."""
@@ -74,7 +73,7 @@ class AssignWorkoutCommand:
 
     user_id: int
     workout_plan_id: int
-    day_of_week: Optional[int] = None
+    day_of_week: int | None = None
     is_active: bool = True
 
     def validate(self) -> None:
@@ -89,8 +88,8 @@ class UpdateUserWorkoutPlanCommand:
     """Command DTO for updating user workout plan assignment."""
 
     user_workout_plan_id: int
-    day_of_week: Optional[int] = None
-    is_active: Optional[bool] = None
+    day_of_week: int | None = None
+    is_active: bool | None = None
 
     def validate(self) -> None:
         """Validate command data."""
@@ -100,6 +99,7 @@ class UpdateUserWorkoutPlanCommand:
 
 
 # Query DTOs
+
 
 @dataclass
 class WorkoutPlanDTO:
@@ -112,7 +112,7 @@ class WorkoutPlanDTO:
     created_by_id: int
     created_at: datetime
     updated_at: datetime
-    exercises: List[ExerciseDTO] = field(default_factory=list)
+    exercises: list[ExerciseDTO] = field(default_factory=list)
 
 
 @dataclass
@@ -122,10 +122,10 @@ class UserWorkoutPlanDTO:
     id: int
     user_id: int
     workout_plan_id: int
-    day_of_week: Optional[int]
+    day_of_week: int | None
     is_active: bool
     created_at: datetime
-    assigned_workout: Optional[WorkoutPlanDTO] = None
+    assigned_workout: WorkoutPlanDTO | None = None
 
 
 @dataclass
@@ -133,5 +133,5 @@ class WorkoutFilterQuery:
     """DTO for filtering workouts."""
 
     user_id: int
-    day: Optional[str] = None
-    is_active: Optional[bool] = None
+    day: str | None = None
+    is_active: bool | None = None
