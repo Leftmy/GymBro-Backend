@@ -1,33 +1,36 @@
 from rest_framework import serializers
-from apps.exercises.models import Exercise
-from apps.exercises.models.muscle_group import MuscleGroup
 
-        
+from apps.exercises.models import Exercise
+
+
 class MuscleGroupSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
     slug = serializers.SlugField()
+
 
 class MuscleCreateSerializer(serializers.Serializer):
     name = serializers.CharField()
     slug = serializers.SlugField()
     svg_id = serializers.CharField()
 
+
 class ExerciseSerializer(serializers.ModelSerializer):
-    difficulty = serializers.CharField(source='get_difficulty_display')
+    difficulty = serializers.CharField(source="get_difficulty_display")
     muscles = MuscleGroupSerializer(many=True)
     description_i18n = serializers.JSONField()
 
     class Meta:
         model = Exercise
         fields = [
-            'id',
-            'name',
-            'description',
-            'description_i18n',
-            'difficulty',
-            'muscles',
+            "id",
+            "name",
+            "description",
+            "description_i18n",
+            "difficulty",
+            "muscles",
         ]
+
 
 class ExerciseMuscleMapSerializer(serializers.Serializer):
     slug = serializers.SlugField()

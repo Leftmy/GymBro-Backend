@@ -1,0 +1,72 @@
+name: CI - Unit Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-asyncio
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Environments setting
+        run: |
+          cp .env.example .env
+          echo "DB_HOST=localhost" >> .env
+          echo "DB_USER=postgres" >> .env
+          echo "DB_PASSWORD=password" >> .env
+          echo "DB_NAME=test_db" >> .env
+
+      - name: Create certs directory and generate RSA Keys
+        run: |
+          mkdir -p app/certs
+          
+          openssl genpkey -algorithm RSA -out app/certs/private_key.pem -pkeyopt rsa_keygen_bits:2048
+          
+          openssl rsa -pubout -in app/certs/private_key.pem -out app/certs/public_key.pem
+          
+          chmod 600 app/certs/private_key.pem
+
+          
+      - name: Run Tests with pytest
+        env:
+          PYTEST_ASYNCIO_MODE: auto
+          PYTEST_ASYNCIO_DEFAULT_FIXTURE_LOOP_SCOPE: function
+          
+          DB_HOST: localhost
+          DB_USER: postgres
+          DB_PASSWORD: password
+          DB_NAME: test_db
+        run: pytest

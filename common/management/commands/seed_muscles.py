@@ -50,6 +50,7 @@ MUSCLE_GROUPS = [
     },
 ]
 
+
 class Command(BaseCommand):
     help = "Seed muscle groups"
 
@@ -71,12 +72,8 @@ class Command(BaseCommand):
                     self.style.SUCCESS(f"Created muscle group: {obj.name}")
                 )
             else:
-                self.stdout.write(
-                    self.style.WARNING(f"Already exists: {obj.name}")
-                )
+                self.stdout.write(self.style.WARNING(f"Already exists: {obj.name}"))
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"\nDone. Created {created_count} muscle groups."
-            )
+            self.style.SUCCESS(f"\nDone. Created {created_count} muscle groups.")
         )

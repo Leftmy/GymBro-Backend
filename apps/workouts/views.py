@@ -1,41 +1,57 @@
 import uuid
+
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+)
 from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from drf_spectacular.utils import OpenApiParameter, extend_schema, OpenApiResponse, OpenApiExample
-
 from apps.workouts.models.user_workout_plan import UserWorkoutPlan
-from apps.workouts.models.workout_plan import WorkoutPlan
-from apps.workouts.services import (
-    WorkoutCommands,
-    WorkoutQueries,
-    WorkoutAlreadyExistsError,
-    InvalidExercisesError,
-    WorkoutNotFoundError,
-    ExerciseNotFoundError,
-)
 from apps.workouts.serializers import (
     UserWorkoutPlanReadSerializer,
     UserWorkoutPlanWriteSerializer,
-    WorkoutPlanSerializer,
     WorkoutCreateSerializer,
+    WorkoutPlanSerializer,
     WorkoutUpdateSerializer,
 )
+from apps.workouts.services import (
+    ExerciseNotFoundError,
+    InvalidExercisesError,
+    WorkoutAlreadyExistsError,
+    WorkoutCommands,
+    WorkoutNotFoundError,
+    WorkoutQueries,
+)
+
+
 class WorkoutsView(APIView):
     @extend_schema(
         parameters=[
             OpenApiParameter(
-                name='day',
+                name="day",
                 type=str,
-                enum=['all', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'], 
+                enum=[
+                    "all",
+                    "monday",
+                    "tuesday",
+                    "wednesday",
+                    "thursday",
+                    "friday",
+                    "saturday",
+                    "sunday",
+                ],
             ),
             OpenApiParameter(
-                name='user_uuid',
+                name="user_uuid",
                 type=str,
                 required=False,
-                description="UUID of the user to fetch workouts for. If provided, returns only their public workouts."
+                description="UUID of the user to fetch workouts for. \
+                    If provided, returns only their public workouts.",
             ),
         ],
         summary="Get user workouts (optionally filtered by day)",
@@ -49,23 +65,22 @@ class WorkoutsView(APIView):
             try:
                 uuid.UUID(user_uuid)
             except ValueError:
-                return Response({"detail": "Invalid user_uuid format"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"detail": "Invalid user_uuid format"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        user_workouts = WorkoutQueries.get_all_user_workouts(request.user, user_uuid=user_uuid)
+        user_workouts = WorkoutQueries.get_all_user_workouts(
+            request.user, user_uuid=user_uuid
+        )
         workouts = WorkoutQueries.filter_user_workouts_by_day(user_workouts, day)
 
-        workouts = (
-            workouts
-            .select_related("workout_plan")
-            .prefetch_related(
-                "workout_plan__plan_exercises__exercise__muscles"
-            )
+        workouts = workouts.select_related("workout_plan").prefetch_related(
+            "workout_plan__plan_exercises__exercise__muscles"
         )
 
-        return Response(
-            UserWorkoutPlanReadSerializer(workouts, many=True).data
-        )
-    
+        return Response(UserWorkoutPlanReadSerializer(workouts, many=True).data)
+
     @extend_schema(
         summary="Create workout",
         request=WorkoutCreateSerializer,
@@ -86,15 +101,10 @@ class WorkoutsView(APIView):
                             "sets": 4,
                             "reps": 10,
                             "rest_seconds": 90,
-                            "order": 1
+                            "order": 1,
                         },
-                        {
-                            "slug": "lunges",
-                            "sets": 3,
-                            "reps": 12,
-                            "order": 2
-                        }
-                    ]
+                        {"slug": "lunges", "sets": 3, "reps": 12, "order": 2},
+                    ],
                 },
                 request_only=True,
             )
@@ -118,8 +128,11 @@ class WorkoutsView(APIView):
         except ExerciseNotFoundError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(WorkoutPlanSerializer(workout).data, status=status.HTTP_201_CREATED)
-    
+        return Response(
+            WorkoutPlanSerializer(workout).data, status=status.HTTP_201_CREATED
+        )
+
+
 class WorkoutsDetailView(APIView):
     @extend_schema(
         summary="Get workout by ID",
@@ -188,14 +201,15 @@ class WorkoutsDetailView(APIView):
             return Response({"detail": "Not found"}, status=404)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
 
 class UserWorkoutPlanView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
         summary="Assign workout plan to user",
-        description="Assign an existing workout plan to the authenticated user with optional day of week",
+        description="Assign an existing workout plan \
+            to the authenticated user with optional day of week",
         request=UserWorkoutPlanWriteSerializer,
         responses={
             201: UserWorkoutPlanReadSerializer,
@@ -205,27 +219,19 @@ class UserWorkoutPlanView(APIView):
         examples=[
             OpenApiExample(
                 "Assign workout (Monday)",
-                value={
-                    "workout_plan_id": 1,
-                    "day_of_week": 1,
-                    "is_active": True
-                },
+                value={"workout_plan_id": 1, "day_of_week": 1, "is_active": True},
                 request_only=True,
             ),
             OpenApiExample(
                 "Assign without day",
-                value={
-                    "workout_plan_id": 2,
-                    "is_active": False
-                },
+                value={"workout_plan_id": 2, "is_active": False},
                 request_only=True,
             ),
         ],
     )
     def post(self, request):
         serializer = UserWorkoutPlanWriteSerializer(
-            data=request.data,
-            context={"request": request}
+            data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
 
@@ -240,7 +246,8 @@ class UserWorkoutPlanView(APIView):
             return Response({"detail": "Workout not found"}, status=404)
 
         return Response(UserWorkoutPlanReadSerializer(obj).data, status=201)
-    
+
+
 class UserWorkoutPlanDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -256,24 +263,19 @@ class UserWorkoutPlanDetailView(APIView):
         examples=[
             OpenApiExample(
                 "Change day",
-                value={
-                    "day_of_week": 3
-                },
+                value={"day_of_week": 3},
                 request_only=True,
             ),
             OpenApiExample(
                 "Set as active",
-                value={
-                    "is_active": True
-                },
+                value={"is_active": True},
                 request_only=True,
             ),
         ],
     )
     def patch(self, request, pk):
         instance = (
-            UserWorkoutPlan.objects
-            .select_related("workout_plan", "user")
+            UserWorkoutPlan.objects.select_related("workout_plan", "user")
             .filter(pk=pk, user=request.user)
             .first()
         )
@@ -285,7 +287,7 @@ class UserWorkoutPlanDetailView(APIView):
             instance=instance,
             data=request.data,
             partial=True,
-            context={"request": request}
+            context={"request": request},
         )
         serializer.is_valid(raise_exception=True)
 
@@ -308,8 +310,7 @@ class UserWorkoutPlanDetailView(APIView):
     )
     def delete(self, request, pk):
         instance = (
-            UserWorkoutPlan.objects
-            .select_related("workout_plan", "user")
+            UserWorkoutPlan.objects.select_related("workout_plan", "user")
             .filter(pk=pk, user=request.user)
             .first()
         )

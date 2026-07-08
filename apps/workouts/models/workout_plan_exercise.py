@@ -1,17 +1,15 @@
-from django.db import models
 from common.core.models import BaseModel
+from django.db import models
+
 from .workout_plan import WorkoutPlan
+
 
 class WorkoutPlanExercise(BaseModel):
     workout_plan = models.ForeignKey(
-        WorkoutPlan,
-        on_delete=models.CASCADE,
-        related_name="plan_exercises"
+        WorkoutPlan, on_delete=models.CASCADE, related_name="plan_exercises"
     )
     exercise = models.ForeignKey(
-        "exercises.Exercise",
-        on_delete=models.CASCADE,
-        related_name="plan_links"
+        "exercises.Exercise", on_delete=models.CASCADE, related_name="plan_links"
     )
     sets = models.PositiveIntegerField()
     reps = models.PositiveIntegerField()
@@ -22,8 +20,7 @@ class WorkoutPlanExercise(BaseModel):
         ordering = ["order"]
         constraints = [
             models.UniqueConstraint(
-                fields=["workout_plan", "order"],
-                name="unique_order_per_plan"
+                fields=["workout_plan", "order"], name="unique_order_per_plan"
             )
         ]
 

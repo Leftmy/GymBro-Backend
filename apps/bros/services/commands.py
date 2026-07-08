@@ -9,19 +9,12 @@ User = get_user_model()
 
 
 class BroCommands:
-
     @staticmethod
     def send_bro_request(
         sender_id: int,
         receiver_uuid: UUID,
     ):
-
-        receiver = (
-            User.objects
-            .only("id")
-            .filter(uuid=receiver_uuid)
-            .first()
-        )
+        receiver = User.objects.only("id").filter(uuid=receiver_uuid).first()
 
         if not receiver:
             raise ValueError("User does not exist")
@@ -31,8 +24,7 @@ class BroCommands:
 
         exists = Bro.objects.filter(
             Q(sender_id=sender_id, receiver_id=receiver.id)
-            |
-            Q(sender_id=receiver.id, receiver_id=sender_id)
+            | Q(sender_id=receiver.id, receiver_id=sender_id)
         ).exists()
 
         if exists:
@@ -49,7 +41,6 @@ class BroCommands:
         user_id: int,
         status: str,
     ):
-
         bro = Bro.objects.filter(
             id=bro_id,
             receiver_id=user_id,
@@ -68,13 +59,13 @@ class BroCommands:
         bro.save(update_fields=["status"])
 
         return bro
-    
+
     @staticmethod
     def delete_bro(bro_id: int, user_id: int):
-        deleted_count, _ = Bro.objects.filter(
-            id=bro_id
-        ).filter(
-            Q(sender_id=user_id) | Q(receiver_id=user_id)
-        ).delete()
+        deleted_count, _ = (
+            Bro.objects.filter(id=bro_id)
+            .filter(Q(sender_id=user_id) | Q(receiver_id=user_id))
+            .delete()
+        )
 
         return deleted_count > 0

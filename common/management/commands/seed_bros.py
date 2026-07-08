@@ -14,10 +14,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--count",
-            type=int,
-            default=100,
-            help="Number of bro relations to create"
+            "--count", type=int, default=100, help="Number of bro relations to create"
         )
 
     @transaction.atomic
@@ -27,11 +24,7 @@ class Command(BaseCommand):
         users = list(User.objects.all())
 
         if len(users) < 2:
-            self.stdout.write(
-                self.style.ERROR(
-                    "Need at least 2 users"
-                )
-            )
+            self.stdout.write(self.style.ERROR("Need at least 2 users"))
             return
 
         statuses = [
@@ -63,10 +56,7 @@ class Command(BaseCommand):
                 continue
 
             # prevent duplicates in DB
-            if Bro.objects.filter(
-                sender=sender,
-                receiver=receiver
-            ).exists():
+            if Bro.objects.filter(sender=sender, receiver=receiver).exists():
                 continue
 
             used_pairs.add(pair)
@@ -85,15 +75,12 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Created {len(created_bros)} bro relations"
-            )
+            self.style.SUCCESS(f"Created {len(created_bros)} bro relations")
         )
 
         if len(created_bros) < count:
             self.stdout.write(
                 self.style.WARNING(
-                    "Could not generate requested amount "
-                    "because of unique constraints."
+                    "Could not generate requested amount because of unique constraints."
                 )
             )

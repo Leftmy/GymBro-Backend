@@ -1,8 +1,9 @@
-from django.db import models
-from django.conf import settings
 from common.core.models import BaseModel
+from django.conf import settings
+from django.db import models
 
 User = settings.AUTH_USER_MODEL
+
 
 class WorkoutPlan(BaseModel):
     name = models.CharField(max_length=255)
@@ -12,21 +13,20 @@ class WorkoutPlan(BaseModel):
         on_delete=models.SET_NULL,
         null=True,
         related_name="created_plans",
-        db_index=True
+        db_index=True,
     )
     is_public = models.BooleanField(default=False)
     exercises = models.ManyToManyField(
         "exercises.Exercise",
         through="WorkoutPlanExercise",
-        related_name="workout_plans"
+        related_name="workout_plans",
     )
 
     class Meta:
         db_table = "workout_plans"
         constraints = [
             models.UniqueConstraint(
-            fields=["name", "created_by"],
-            name="unique_plan_per_user"
+                fields=["name", "created_by"], name="unique_plan_per_user"
             )
         ]
 

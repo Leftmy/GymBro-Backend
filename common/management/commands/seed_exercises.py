@@ -6,8 +6,8 @@ from django.db import transaction
 
 from apps.exercises.models import (
     Exercise,
-    MuscleGroup,
     ExerciseMuscle,
+    MuscleGroup,
 )
 
 
@@ -17,22 +17,14 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **kwargs):
         fixture_path = (
-            Path(__file__)
-            .resolve()
-            .parents[2]
-            / "fixtures"
-            / "exercises.json"
+            Path(__file__).resolve().parents[2] / "fixtures" / "exercises.json"
         )
 
         if not fixture_path.exists():
-            self.stdout.write(
-                self.style.ERROR(
-                    f"Fixture not found: {fixture_path}"
-                )
-            )
+            self.stdout.write(self.style.ERROR(f"Fixture not found: {fixture_path}"))
             return
 
-        with open(fixture_path, "r", encoding="utf-8") as file:
+        with open(fixture_path, encoding="utf-8") as file:
             exercises = json.load(file)
 
         created_count = 0
@@ -44,7 +36,9 @@ class Command(BaseCommand):
             if isinstance(raw_desc, dict):
                 description_i18n = raw_desc
                 # prefer english as the default text fallback
-                description_text = raw_desc.get("en") or next(iter(raw_desc.values()), "")
+                description_text = raw_desc.get("en") or next(
+                    iter(raw_desc.values()), ""
+                )  # noqa: E501
             else:
                 description_text = raw_desc
                 description_i18n = {"en": raw_desc} if raw_desc else {}
@@ -66,9 +60,7 @@ class Command(BaseCommand):
             if created:
                 created_count += 1
                 self.stdout.write(
-                    self.style.SUCCESS(
-                        f"Created exercise: {exercise.name}"
-                    )
+                    self.style.SUCCESS(f"Created exercise: {exercise.name}")
                 )
             else:
                 # update existing record with i18n data if it's missing or different
@@ -87,15 +79,17 @@ class Command(BaseCommand):
                     updated = True
 
                 if updated:
-                    self.stdout.write(self.style.SUCCESS(f"Updated exercise: {exercise.name}"))
+                    self.stdout.write(
+                        self.style.SUCCESS(f"Updated exercise: {exercise.name}")
+                    )  # noqa: E501
                 else:
-                    self.stdout.write(self.style.WARNING(f"Already exists: {exercise.name}"))
+                    self.stdout.write(
+                        self.style.WARNING(f"Already exists: {exercise.name}")
+                    )  # noqa: E501
 
             for muscle_name in item.get("muscles", []):
                 try:
-                    muscle = MuscleGroup.objects.get(
-                        name=muscle_name
-                    )
+                    muscle = MuscleGroup.objects.get(name=muscle_name)
 
                     ExerciseMuscle.objects.get_or_create(
                         exercise=exercise,
@@ -104,13 +98,9 @@ class Command(BaseCommand):
 
                 except MuscleGroup.DoesNotExist:
                     self.stdout.write(
-                        self.style.ERROR(
-                            f"Muscle not found: {muscle_name}"
-                        )
+                        self.style.ERROR(f"Muscle not found: {muscle_name}")
                     )
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"\nDone. Created {created_count} exercises."
-            )
+            self.style.SUCCESS(f"\nDone. Created {created_count} exercises.")
         )

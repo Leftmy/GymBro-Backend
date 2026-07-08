@@ -1,17 +1,17 @@
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework.views import APIView
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
 
 from apps.bros.constants import BroListType
-from apps.bros.services.commands import BroCommands
-from apps.bros.services.queries import BroQueries
 from apps.bros.serializers import (
-    BroSerializer,
     BroCreateSerializer,
+    BroSerializer,
     BroUpdateSerializer,
 )
+from apps.bros.services.commands import BroCommands
+from apps.bros.services.queries import BroQueries
 
 
 class BroAPIView(APIView):
@@ -38,9 +38,7 @@ class BroAPIView(APIView):
             bro_type=bro_type,
         )
 
-        return Response(
-            BroSerializer(bros, many=True).data
-        )
+        return Response(BroSerializer(bros, many=True).data)
 
     @extend_schema(
         request=BroCreateSerializer,

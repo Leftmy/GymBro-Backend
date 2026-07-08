@@ -1,23 +1,22 @@
-from django.db import models
 from common.core.models import BaseModel
+from django.db import models
+
 
 class ExerciseMuscle(BaseModel):
     exercise = models.ForeignKey(
-        "exercises.Exercise",
-        on_delete=models.CASCADE,
-        related_name="muscle_links"
+        "exercises.Exercise", on_delete=models.CASCADE, related_name="muscle_links"
     )
 
     muscle = models.ForeignKey(
-        "exercises.MuscleGroup",
-        on_delete=models.CASCADE,
-        related_name="exercise_links"
+        "exercises.MuscleGroup", on_delete=models.CASCADE, related_name="exercise_links"
     )
     # is_primary = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["exercise", "muscle"], name="unique_exercise_muscle")
+            models.UniqueConstraint(
+                fields=["exercise", "muscle"], name="unique_exercise_muscle"
+            )
         ]
 
     def __str__(self):

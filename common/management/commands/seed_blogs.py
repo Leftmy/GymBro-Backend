@@ -5,12 +5,10 @@ import random
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
-
 from faker import Faker
 
-from apps.blog.models import Post, Comment, PostStatus
+from apps.blog.models import Comment, Post, PostStatus
 from apps.users.models import User
-
 
 fake = Faker()
 
@@ -20,17 +18,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--posts",
-            type=int,
-            default=30,
-            help="Number of posts to create"
+            "--posts", type=int, default=30, help="Number of posts to create"
         )
 
         parser.add_argument(
-            "--comments",
-            type=int,
-            default=100,
-            help="Number of comments to create"
+            "--comments", type=int, default=100, help="Number of comments to create"
         )
 
     @transaction.atomic
@@ -41,11 +33,7 @@ class Command(BaseCommand):
         users = list(User.objects.all())
 
         if not users:
-            self.stdout.write(
-                self.style.ERROR(
-                    "No users found. Seed users first."
-                )
-            )
+            self.stdout.write(self.style.ERROR("No users found. Seed users first."))
             return
 
         statuses = [
@@ -72,16 +60,9 @@ class Command(BaseCommand):
         for _ in range(posts_count):
             status = random.choice(statuses)
 
-            published_at = (
-                timezone.now()
-                if status == PostStatus.PUBLISHED
-                else None
-            )
+            published_at = timezone.now() if status == PostStatus.PUBLISHED else None
 
-            labels = random.sample(
-                possible_labels,
-                k=random.randint(1, 4)
-            )
+            labels = random.sample(possible_labels, k=random.randint(1, 4))
 
             posts_to_create.append(
                 Post(
@@ -96,11 +77,7 @@ class Command(BaseCommand):
 
         created_posts = Post.objects.bulk_create(posts_to_create)
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Created {len(created_posts)} posts"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"Created {len(created_posts)} posts"))
 
         comments_to_create = []
 
@@ -116,13 +93,7 @@ class Command(BaseCommand):
         created_comments = Comment.objects.bulk_create(comments_to_create)
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Created {len(created_comments)} comments"
-            )
+            self.style.SUCCESS(f"Created {len(created_comments)} comments")
         )
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                "Blog seed completed successfully"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS("Blog seed completed successfully"))

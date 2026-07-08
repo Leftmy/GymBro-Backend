@@ -9,9 +9,7 @@ class BroCreateSerializer(serializers.Serializer):
 
 
 class BroUpdateSerializer(serializers.Serializer):
-    status = serializers.ChoiceField(
-        choices=["accepted"]
-    )
+    status = serializers.ChoiceField(choices=["accepted"])
 
 
 class BroSerializer(serializers.ModelSerializer):

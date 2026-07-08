@@ -1,6 +1,6 @@
-from apps.bros.views import BroAPIView, BroDetailAPIView
 from django.urls import path
 
+from apps.bros.views import BroAPIView, BroDetailAPIView
 
 urlpatterns = [
     path("", BroAPIView.as_view(), name="handle-bros"),

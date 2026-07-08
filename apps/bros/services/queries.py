@@ -1,12 +1,10 @@
-from uuid import UUID
-
 from django.db.models import Q
-from apps.bros.models import Bro
+
 from apps.bros.constants import BroListType
+from apps.bros.models import Bro
 
 
 class BroQueries:
-
     @staticmethod
     def get_bros(user_id: int, bro_type: str):
         if bro_type not in BroListType.CHOICES:
